@@ -9,10 +9,9 @@
 - Root- oder Sudo-Zugriff
 
 ### Software auf dem VPS
-- Docker Engine
-- Docker Compose
-- Nginx (als Reverse Proxy)
-- Certbot (für SSL-Zertifikate)
+- **Nur Docker Engine und Docker Compose benötigt!**
+- Nginx läuft als Docker-Container (keine lokale Installation nötig)
+- Certbot läuft als Docker-Container (keine lokale Installation nötig)
 
 ### Domain
 - Eine Domain oder Subdomain, die auf die IP deines VPS zeigt
@@ -63,17 +62,7 @@ docker-compose --version
 
 ---
 
-## Schritt 3: Nginx installieren
-
-```bash
-apt install nginx -y
-systemctl enable nginx
-systemctl start nginx
-```
-
----
-
-## Schritt 4: Repository klonen
+## Schritt 3: Repository klonen
 
 ```bash
 # Arbeitsverzeichnis erstellen
@@ -87,16 +76,16 @@ cd TenFingers
 
 ---
 
-## Schritt 5: Environment-Variablen konfigurieren
+## Schritt 4: Environment-Variablen konfigurieren
 
-### Backend .env erstellen
+### Production .env erstellen
 ```bash
-cd /var/www/TenFingers/backend
-cp .env.example .env
-nano .env
+cd /var/www/TenFingers
+cp .env.production.example .env.production
+nano .env.production
 ```
 
-Trage folgende Werte ein:
+Trage folgende Werte ein (siehe .env.production.example für vollständige Anleitung):
 ```env
 # PostgreSQL Datenbank
 DB_HOST=postgres
@@ -114,6 +103,9 @@ NODE_ENV=production
 
 # Frontend URL (deine Domain)
 FRONTEND_URL=https://deine-domain.de
+
+# React App (API URL)
+REACT_APP_API_URL=https://deine-domain.de/api
 ```
 
 **Sichere Passwörter generieren:**
@@ -125,75 +117,30 @@ openssl rand -base64 32
 openssl rand -base64 64
 ```
 
-### Frontend .env erstellen
-```bash
-cd /var/www/TenFingers/frontend
-nano .env
-```
-
-```env
-REACT_APP_API_URL=https://deine-domain.de/api
-```
-
 ---
 
-## Schritt 6: Production Docker Compose erstellen
+## Schritt 5: Domain konfigurieren
 
+Die Domain wird in der nginx.conf konfiguriert:
 ```bash
 cd /var/www/TenFingers
-nano docker-compose.prod.yml
+nano nginx.conf
 ```
 
-Siehe `docker-compose.prod.yml` Datei im Repository.
+Ersetze `deine-domain.de` mit deiner echten Domain (oder nutze das deploy.sh Skript, das dies automatisch macht).
 
 ---
 
-## Schritt 7: Nginx Reverse Proxy konfigurieren
-
-```bash
-nano /etc/nginx/sites-available/tenfingers
-```
-
-Siehe `nginx.conf` Datei im Repository.
-
-```bash
-# Symlink erstellen
-ln -s /etc/nginx/sites-available/tenfingers /etc/nginx/sites-enabled/
-
-# Standard-Site deaktivieren
-rm /etc/nginx/sites-enabled/default
-
-# Nginx-Konfiguration testen
-nginx -t
-
-# Nginx neu laden
-systemctl reload nginx
-```
-
----
-
-## Schritt 8: SSL-Zertifikat mit Let's Encrypt
-
-```bash
-# Certbot installieren
-apt install certbot python3-certbot-nginx -y
-
-# SSL-Zertifikat erhalten und automatisch konfigurieren
-certbot --nginx -d deine-domain.de
-
-# Automatische Erneuerung testen
-certbot renew --dry-run
-```
-
----
-
-## Schritt 9: Anwendung starten
+## Schritt 6: Anwendung starten
 
 ```bash
 cd /var/www/TenFingers
 
-# Container bauen und starten
-docker-compose -f docker-compose.prod.yml up -d --build
+# Docker Images von GitHub Container Registry laden
+docker-compose -f docker-compose.prod.yml pull
+
+# Container starten (inkl. Nginx und Certbot als Container)
+docker-compose -f docker-compose.prod.yml up -d
 
 # Logs überprüfen
 docker-compose -f docker-compose.prod.yml logs -f
@@ -202,9 +149,41 @@ docker-compose -f docker-compose.prod.yml logs -f
 docker-compose -f docker-compose.prod.yml ps
 ```
 
+**Wichtig:**
+- Die Docker Images werden automatisch von GitHub Container Registry geladen
+- Nginx und Certbot laufen als Docker-Container
+- Keine lokale Installation von Software nötig (außer Docker)
+- Standardmäßig wird das `latest` Image verwendet
+- Für spezifische Versionen: Setze `IMAGE_TAG=v1.0.0` in `.env.production`
+
 ---
 
-## Schritt 10: Datenbank initialisieren
+## Schritt 7: SSL-Zertifikat mit Let's Encrypt einrichten
+
+```bash
+cd /var/www/TenFingers
+
+# SSL-Zertifikat über den Certbot Docker-Container erstellen
+docker-compose -f docker-compose.prod.yml run --rm certbot \
+  certonly --webroot --webroot-path=/var/www/certbot \
+  -d deine-domain.de \
+  --email deine-email@example.com \
+  --agree-tos \
+  --no-eff-email
+
+# SSL-Konfiguration in nginx.conf aktivieren (auskommentieren)
+nano nginx.conf
+# Entferne die Kommentare (#) vor den ssl_certificate Zeilen
+
+# Nginx-Container neu starten
+docker-compose -f docker-compose.prod.yml restart nginx
+```
+
+**Automatische Erneuerung:** Der Certbot-Container erneuert die Zertifikate automatisch alle 12 Stunden.
+
+---
+
+## Schritt 8: Datenbank initialisieren
 
 Die Datenbank wird automatisch beim ersten Start initialisiert. Überprüfe die Logs:
 
@@ -221,7 +200,7 @@ Du solltest sehen:
 
 ---
 
-## Schritt 11: Ersten Lehrer-Account erstellen
+## Schritt 9: Ersten Lehrer-Account erstellen
 
 Du kannst dich jetzt auf `https://deine-domain.de` registrieren und beim ersten Account "Lehrer" als Rolle auswählen.
 
@@ -248,11 +227,21 @@ docker-compose -f docker-compose.prod.yml logs -f frontend
 
 # Nur Datenbank
 docker-compose -f docker-compose.prod.yml logs -f postgres
+
+# Nur Nginx
+docker-compose -f docker-compose.prod.yml logs -f nginx
+
+# Nur Certbot
+docker-compose -f docker-compose.prod.yml logs -f certbot
 ```
 
 ### Container neustarten
 ```bash
+# Alle Container
 docker-compose -f docker-compose.prod.yml restart
+
+# Nur Nginx (z.B. nach Konfigurationsänderung)
+docker-compose -f docker-compose.prod.yml restart nginx
 ```
 
 ### Anwendung stoppen
@@ -266,15 +255,46 @@ docker-compose -f docker-compose.prod.yml down -v
 ```
 
 ### Updates einspielen
+
+**Option 1: Neueste Version (latest)**
 ```bash
 cd /var/www/TenFingers
 
-# Code aktualisieren
+# Neueste Images laden
+docker-compose -f docker-compose.prod.yml pull
+
+# Container neu starten
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+**Option 2: Spezifische Version**
+```bash
+cd /var/www/TenFingers
+
+# Version in .env.production setzen
+echo "IMAGE_TAG=v1.0.0" >> .env.production
+
+# Images laden und neu starten
+docker-compose -f docker-compose.prod.yml pull
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+**Option 3: Code-Änderungen (nginx.conf, etc.)**
+```bash
+cd /var/www/TenFingers
+
+# Repository aktualisieren
 git pull origin main
 
-# Container neu bauen und starten
-docker-compose -f docker-compose.prod.yml up -d --build
+# Container neu starten (falls Konfiguration geändert)
+docker-compose -f docker-compose.prod.yml restart nginx
 ```
+
+### Verfügbare Versionen
+
+Alle verfügbaren Versionen findest du auf:
+- GitHub Releases: https://github.com/AndreasPrang/TenFingers/releases
+- Container Registry: https://github.com/AndreasPrang/TenFingers/pkgs/container/tenfingers-backend
 
 ---
 
@@ -345,20 +365,42 @@ docker exec -it tenfingers-postgres psql -U tenfingers_user tenfingers
 ### Port bereits belegt
 ```bash
 # Prüfen, welcher Prozess Port 80/443 nutzt
-netstat -tulpn | grep :80
-netstat -tulpn | grep :443
+sudo lsof -i :80
+sudo lsof -i :443
 
-# Nginx stoppen falls nötig
-systemctl stop nginx
+# Falls eine lokale Nginx-Installation läuft, stoppe sie
+sudo systemctl stop nginx
+sudo systemctl disable nginx
+
+# Oder entferne sie komplett
+sudo apt remove nginx nginx-common
 ```
 
 ### SSL-Zertifikat Probleme
 ```bash
-# Certbot-Logs überprüfen
-journalctl -u certbot -f
+# Certbot Container-Logs überprüfen
+docker-compose -f docker-compose.prod.yml logs certbot
 
-# Manuell erneuern
-certbot renew --force-renewal
+# Manuell SSL-Zertifikat erneuern
+docker-compose -f docker-compose.prod.yml run --rm certbot renew --force-renewal
+
+# Nginx nach SSL-Erneuerung neu starten
+docker-compose -f docker-compose.prod.yml restart nginx
+
+# SSL-Zertifikate manuell testen
+docker-compose -f docker-compose.prod.yml exec nginx ls -la /etc/letsencrypt/live/
+```
+
+### Nginx-Container startet nicht
+```bash
+# Nginx-Logs überprüfen
+docker-compose -f docker-compose.prod.yml logs nginx
+
+# Nginx-Konfiguration im Container testen
+docker-compose -f docker-compose.prod.yml exec nginx nginx -t
+
+# Nginx-Container neu bauen
+docker-compose -f docker-compose.prod.yml up -d --build nginx
 ```
 
 ---

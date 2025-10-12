@@ -75,20 +75,7 @@ else
 fi
 
 # ======================
-# 4. Nginx installieren
-# ======================
-if ! command -v nginx &> /dev/null; then
-    info "Installiere Nginx..."
-    apt install nginx -y
-    systemctl enable nginx
-    systemctl start nginx
-    success "Nginx installiert"
-else
-    success "Nginx bereits installiert"
-fi
-
-# ======================
-# 5. Firewall konfigurieren
+# 4. Firewall konfigurieren
 # ======================
 info "Konfiguriere Firewall..."
 ufw allow OpenSSH
@@ -98,7 +85,7 @@ ufw --force enable
 success "Firewall konfiguriert"
 
 # ======================
-# 6. Arbeitsverzeichnis erstellen
+# 5. Arbeitsverzeichnis erstellen
 # ======================
 info "Erstelle Arbeitsverzeichnis..."
 mkdir -p /var/www
@@ -106,7 +93,7 @@ cd /var/www
 success "Arbeitsverzeichnis erstellt"
 
 # ======================
-# 7. Repository klonen
+# 6. Repository klonen
 # ======================
 if [ -d "/var/www/TenFingers" ]; then
     info "Repository existiert bereits. Aktualisiere..."
@@ -121,25 +108,64 @@ else
 fi
 
 # ======================
-# 8. Environment-Variablen prüfen
+# 7. Environment-Variablen prüfen
 # ======================
-if [ ! -f "/var/www/TenFingers/backend/.env" ]; then
-    error "Backend .env Datei fehlt! Bitte erstelle /var/www/TenFingers/backend/.env"
-fi
-
-if [ ! -f "/var/www/TenFingers/frontend/.env" ]; then
-    error "Frontend .env Datei fehlt! Bitte erstelle /var/www/TenFingers/frontend/.env"
+if [ ! -f "/var/www/TenFingers/.env.production" ]; then
+    error ".env.production Datei fehlt! Bitte erstelle /var/www/TenFingers/.env.production basierend auf .env.production.example"
 fi
 
 success "Environment-Variablen gefunden"
 
 # ======================
-# 9. Docker Container starten
+# 8. Domain konfigurieren
+# ======================
+echo -e "${YELLOW}"
+read -p "Gib deine Domain ein (z.B. example.com): " DOMAIN
+echo -e "${NC}"
+
+info "Konfiguriere Domain in nginx.conf..."
+sed -i "s/deine-domain.de/$DOMAIN/g" /var/www/TenFingers/nginx.conf
+success "Domain konfiguriert: $DOMAIN"
+
+# ======================
+# 9. Docker Image Version wählen
+# ======================
+echo -e "${YELLOW}"
+echo "Welche Version möchtest du deployen?"
+echo "  - 'latest' für die neueste Version vom main Branch"
+echo "  - Oder eine spezifische Version wie 'v1.0.0'"
+read -p "Image Tag (Standard: latest): " IMAGE_TAG
+IMAGE_TAG=${IMAGE_TAG:-latest}
+echo -e "${NC}"
+
+# Setze IMAGE_TAG in .env.production wenn es existiert
+if [ -f "/var/www/TenFingers/.env.production" ]; then
+    if grep -q "^IMAGE_TAG=" /var/www/TenFingers/.env.production; then
+        sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=$IMAGE_TAG/" /var/www/TenFingers/.env.production
+    else
+        echo "IMAGE_TAG=$IMAGE_TAG" >> /var/www/TenFingers/.env.production
+    fi
+fi
+
+# Exportiere für docker-compose
+export IMAGE_TAG
+
+success "Image Tag: $IMAGE_TAG"
+
+# ======================
+# 10. Docker Images pullen
+# ======================
+info "Lade Docker Images von GitHub Container Registry..."
+docker-compose -f docker-compose.prod.yml pull
+success "Docker Images geladen"
+
+# ======================
+# 11. Docker Container starten
 # ======================
 info "Starte Docker Container..."
 cd /var/www/TenFingers
 docker-compose -f docker-compose.prod.yml down 2>/dev/null || true
-docker-compose -f docker-compose.prod.yml up -d --build
+docker-compose -f docker-compose.prod.yml up -d
 success "Docker Container gestartet"
 
 # Warte auf Container-Start
@@ -151,69 +177,49 @@ info "Prüfe Container-Status..."
 docker-compose -f docker-compose.prod.yml ps
 
 # ======================
-# 10. Nginx konfigurieren
-# ======================
-info "Konfiguriere Nginx..."
-
-if [ ! -f "/etc/nginx/sites-available/tenfingers" ]; then
-    # Kopiere Nginx-Konfiguration
-    cp /var/www/TenFingers/nginx.conf /etc/nginx/sites-available/tenfingers
-
-    # Frage nach Domain
-    echo -e "${YELLOW}"
-    read -p "Gib deine Domain ein (z.B. example.com): " DOMAIN
-    echo -e "${NC}"
-
-    # Ersetze Platzhalter in Nginx-Konfiguration
-    sed -i "s/deine-domain.de/$DOMAIN/g" /etc/nginx/sites-available/tenfingers
-
-    # Erstelle Symlink
-    ln -s /etc/nginx/sites-available/tenfingers /etc/nginx/sites-enabled/
-
-    # Entferne Default-Site
-    rm -f /etc/nginx/sites-enabled/default
-
-    # Teste Nginx-Konfiguration
-    nginx -t
-
-    # Reload Nginx
-    systemctl reload nginx
-
-    success "Nginx konfiguriert"
-else
-    success "Nginx bereits konfiguriert"
-fi
-
-# ======================
-# 11. SSL-Zertifikat (optional)
+# 10. SSL-Zertifikat einrichten (optional)
 # ======================
 echo -e "${YELLOW}"
 read -p "Möchtest du jetzt ein SSL-Zertifikat mit Let's Encrypt einrichten? (j/n): " SETUP_SSL
 echo -e "${NC}"
 
 if [ "$SETUP_SSL" = "j" ] || [ "$SETUP_SSL" = "J" ]; then
-    if ! command -v certbot &> /dev/null; then
-        info "Installiere Certbot..."
-        apt install certbot python3-certbot-nginx -y
-        success "Certbot installiert"
-    fi
-
     echo -e "${YELLOW}"
-    read -p "Gib deine Domain ein (z.B. example.com): " DOMAIN
-    read -p "Gib deine E-Mail ein: " EMAIL
+    read -p "Gib deine E-Mail für Let's Encrypt ein: " EMAIL
     echo -e "${NC}"
 
-    info "Richte SSL-Zertifikat ein..."
-    certbot --nginx -d "$DOMAIN" --non-interactive --agree-tos --email "$EMAIL"
-    success "SSL-Zertifikat eingerichtet"
+    info "Richte SSL-Zertifikat ein (über certbot Docker-Container)..."
 
-    # Teste automatische Erneuerung
-    certbot renew --dry-run
-    success "SSL-Zertifikat Erneuerung getestet"
+    # Certbot im Docker-Container ausführen
+    docker-compose -f docker-compose.prod.yml run --rm certbot \
+        certonly --webroot --webroot-path=/var/www/certbot \
+        -d "$DOMAIN" \
+        --email "$EMAIL" \
+        --agree-tos \
+        --no-eff-email \
+        --force-renewal
+
+    if [ $? -eq 0 ]; then
+        success "SSL-Zertifikat erfolgreich erstellt"
+
+        # Aktiviere SSL in nginx.conf
+        info "Aktiviere SSL in nginx.conf..."
+        sed -i 's/# ssl_certificate/ssl_certificate/g' /var/www/TenFingers/nginx.conf
+        sed -i 's/# ssl_certificate_key/ssl_certificate_key/g' /var/www/TenFingers/nginx.conf
+        sed -i 's/# include \/etc\/letsencrypt/include \/etc\/letsencrypt/g' /var/www/TenFingers/nginx.conf
+        sed -i 's/# ssl_dhparam/ssl_dhparam/g' /var/www/TenFingers/nginx.conf
+
+        # Nginx neu laden
+        info "Starte Nginx-Container neu..."
+        docker-compose -f docker-compose.prod.yml restart nginx
+        success "SSL-Zertifikat aktiviert und Nginx neu gestartet"
+    else
+        error "SSL-Zertifikat konnte nicht erstellt werden. Bitte prüfe die DNS-Einstellungen."
+    fi
 fi
 
 # ======================
-# 12. Backup-Verzeichnis erstellen
+# 11. Backup-Verzeichnis erstellen
 # ======================
 info "Erstelle Backup-Verzeichnis..."
 mkdir -p /var/backups/tenfingers
@@ -221,7 +227,7 @@ chmod 700 /var/backups/tenfingers
 success "Backup-Verzeichnis erstellt"
 
 # ======================
-# 13. Cron-Job für Backups einrichten
+# 12. Cron-Job für Backups einrichten
 # ======================
 echo -e "${YELLOW}"
 read -p "Möchtest du einen täglichen Datenbank-Backup einrichten? (j/n): " SETUP_BACKUP
@@ -235,6 +241,7 @@ if [ "$SETUP_BACKUP" = "j" ] || [ "$SETUP_BACKUP" = "J" ]; then
 #!/bin/bash
 BACKUP_DIR="/var/backups/tenfingers"
 DATE=$(date +%Y%m%d_%H%M%S)
+# Datenbank-Backup aus Docker-Container erstellen
 docker exec tenfingers-postgres pg_dump -U tenfingers_user tenfingers > "$BACKUP_DIR/backup_$DATE.sql"
 # Lösche Backups älter als 7 Tage
 find "$BACKUP_DIR" -name "backup_*.sql" -mtime +7 -delete
@@ -271,7 +278,8 @@ echo ""
 echo "  Container-Status:      docker-compose -f docker-compose.prod.yml ps"
 echo "  Logs anzeigen:         docker-compose -f docker-compose.prod.yml logs -f"
 echo "  Container neustarten:  docker-compose -f docker-compose.prod.yml restart"
-echo "  Updates einspielen:    cd /var/www/TenFingers && git pull && docker-compose -f docker-compose.prod.yml up -d --build"
+echo "  Images aktualisieren:  cd /var/www/TenFingers && docker-compose -f docker-compose.prod.yml pull && docker-compose -f docker-compose.prod.yml up -d"
+echo "  Code aktualisieren:    cd /var/www/TenFingers && git pull"
 echo ""
 echo -e "${YELLOW}Weitere Dokumentation: /var/www/TenFingers/DEPLOYMENT.md${NC}"
 echo ""

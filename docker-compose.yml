@@ -4,9 +4,9 @@ services:
     container_name: tenfingers-db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: tenfingers
-      POSTGRES_PASSWORD: tenfingers123
-      POSTGRES_DB: tenfingers
+      POSTGRES_USER: ${POSTGRES_USER:-tenfingers}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tenfingers123}
+      POSTGRES_DB: ${POSTGRES_DB:-tenfingers}
     ports:
       - "5432:5432"
     volumes:
@@ -14,7 +14,7 @@ services:
     networks:
       - tenfingers-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U tenfingers"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-tenfingers}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -26,10 +26,10 @@ services:
     container_name: tenfingers-backend
     restart: unless-stopped
     environment:
-      NODE_ENV: development
-      PORT: 4000
-      DATABASE_URL: postgresql://tenfingers:tenfingers123@db:5432/tenfingers
-      JWT_SECRET: your-secret-key-change-in-production
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: ${PORT:-4000}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://tenfingers:tenfingers123@db:5432/tenfingers}
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-key-change-in-production}
     ports:
       - "4000:4000"
     volumes:
@@ -48,7 +48,7 @@ services:
     container_name: tenfingers-frontend
     restart: unless-stopped
     environment:
-      - REACT_APP_API_URL=http://192.168.2.66:4000
+      - REACT_APP_API_URL=${REACT_APP_API_URL:-http://localhost:4000}
     ports:
       - "3000:3000"
     volumes:

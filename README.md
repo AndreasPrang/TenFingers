@@ -89,6 +89,80 @@ Die vollständige Deployment-Dokumentation findest du in [DEPLOYMENT.md](DEPLOYM
 - Domain mit DNS A-Record
 - SSL-Zertifikat (Let's Encrypt)
 
+## Releases & Versionierung
+
+TenFingers verwendet automatisierte Docker Image Builds mit GitHub Actions.
+
+### Docker Images
+
+Die Images werden automatisch bei jedem Push auf `main` und bei jedem Tag gebaut:
+
+- **Backend**: `ghcr.io/andreasprang/tenfingers-backend`
+- **Frontend**: `ghcr.io/andreasprang/tenfingers-frontend`
+
+### Verfügbare Tags
+
+- `latest` - Neueste Version vom main Branch
+- `main` - Aktueller Stand des main Branch
+- `v1.0.0` - Spezifische Releases (Semantic Versioning)
+- `v1.0` - Major.Minor Version
+- `v1` - Major Version
+
+### Neue Version erstellen
+
+1. **Code ändern und committen**:
+```bash
+git add .
+git commit -m "feat: Neue Feature-Beschreibung"
+git push origin main
+```
+
+2. **Release-Tag erstellen**:
+```bash
+# Erstelle einen Tag mit Semantic Versioning
+git tag -a v1.0.0 -m "Release v1.0.0: Initiale Version"
+git push origin v1.0.0
+```
+
+3. **GitHub Actions baut automatisch**:
+   - Die Images werden automatisch gebaut
+   - Zu GitHub Container Registry gepusht
+   - Mit allen relevanten Tags versehen
+
+4. **Auf VPS deployen**:
+```bash
+# Mit spezifischer Version
+cd /var/www/TenFingers
+export IMAGE_TAG=v1.0.0
+docker-compose -f docker-compose.prod.yml pull
+docker-compose -f docker-compose.prod.yml up -d
+
+# Oder mit latest
+docker-compose -f docker-compose.prod.yml pull
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+### Semantic Versioning
+
+Wir folgen [Semantic Versioning](https://semver.org/lang/de/):
+
+- **Major** (v1.0.0 → v2.0.0): Breaking Changes
+- **Minor** (v1.0.0 → v1.1.0): Neue Features (rückwärtskompatibel)
+- **Patch** (v1.0.0 → v1.0.1): Bugfixes
+
+### Deployment-Strategie
+
+**Development**: Push auf `main` → automatischer Build → `latest` Tag
+
+**Production**:
+1. Erstelle Git Tag mit Versionsnummer
+2. GitHub Actions baut versioniertes Image
+3. Deploy auf VPS mit spezifischer Version
+4. Teste
+5. Bei Erfolg: Setze `IMAGE_TAG=latest` für automatische Updates
+
+Detaillierte Anleitung: [RELEASE.md](RELEASE.md)
+
 ## Projekt-Struktur
 
 ```
