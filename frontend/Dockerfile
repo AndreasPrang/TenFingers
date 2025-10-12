@@ -12,6 +12,10 @@ RUN npm install
 # Kopiere den Rest der Anwendung
 COPY . .
 
+# Build-Argument für API URL
+ARG REACT_APP_API_URL=/api
+ENV REACT_APP_API_URL=$REACT_APP_API_URL
+
 # Build für Production
 RUN npm run build
 
