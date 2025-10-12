@@ -18,8 +18,8 @@ const Imprint: React.FC = () => {
         <section className="legal-section">
           <h2>Verantwortlich für den Inhalt</h2>
           <p>
-            <strong>Name:</strong> [DEIN NAME]<br />
-            <strong>E-Mail:</strong> [DEINE E-MAIL]
+            <strong>Name:</strong> Andreas Prang<br />
+            <strong>E-Mail:</strong> tenfingers aet andreas prang de
           </p>
           <p className="legal-hint">
             (Verantwortlich nach § 55 Abs. 2 RStV und Art. 4 Nr. 7 DSGVO)
