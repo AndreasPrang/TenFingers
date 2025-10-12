@@ -256,6 +256,35 @@ docker-compose -f docker-compose.prod.yml down -v
 
 ### Updates einspielen
 
+#### Automatisches Update-Script (empfohlen)
+
+Das mitgelieferte `update.sh` Script automatisiert den gesamten Update-Prozess:
+
+```bash
+cd /var/www/TenFingers
+sudo ./update.sh
+```
+
+Das Script führt folgende Schritte aus:
+1. **Backup erstellen** (optional, aber empfohlen)
+2. **Git Repository aktualisieren** - Wähle Branch/Tag (z.B. main, v1.0.0)
+3. **Docker Image Version wählen** - Wähle Image Tag (latest oder spezifische Version)
+4. **Neue Images laden** - Von GitHub Container Registry
+5. **Services neu starten** - Mit Zero-Downtime
+6. **Health Check** - Prüft ob Services erreichbar sind
+7. **Status-Report** - Zeigt aktuelle Versionen an
+
+**Vorteile:**
+- Automatisches Backup vor dem Update
+- Interaktive Auswahl von Git-Version und Docker-Tag
+- Health-Checks nach dem Update
+- Umfassende Fehlerprüfung
+- Detaillierter Status-Report
+
+---
+
+#### Manuelle Updates
+
 **Option 1: Neueste Version (latest)**
 ```bash
 cd /var/www/TenFingers

@@ -131,16 +131,39 @@ git push origin v1.0.0
 
 4. **Auf VPS deployen**:
 ```bash
-# Mit spezifischer Version
+# Mit automatischem Update-Script (empfohlen)
+cd /var/www/TenFingers
+sudo ./update.sh
+# Wähle interaktiv die gewünschte Version
+
+# Oder manuell mit spezifischer Version
 cd /var/www/TenFingers
 export IMAGE_TAG=v1.0.0
 docker-compose -f docker-compose.prod.yml pull
 docker-compose -f docker-compose.prod.yml up -d
 
-# Oder mit latest
+# Oder manuell mit latest
 docker-compose -f docker-compose.prod.yml pull
 docker-compose -f docker-compose.prod.yml up -d
 ```
+
+### Production Updates
+
+Um einen laufenden Service in Production zu aktualisieren, nutze das automatische Update-Script:
+
+```bash
+cd /var/www/TenFingers
+sudo ./update.sh
+```
+
+Das Script bietet:
+- Automatisches Backup vor dem Update
+- Interaktive Auswahl von Git-Version und Docker-Tag
+- Health-Checks nach dem Update
+- Detaillierte Fehlerprüfung
+- Status-Report
+
+Siehe [DEPLOYMENT.md](DEPLOYMENT.md#automatisches-update-script-empfohlen) für Details.
 
 ### Semantic Versioning
 
