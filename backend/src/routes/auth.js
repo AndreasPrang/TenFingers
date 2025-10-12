@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { register, login, getProfile } = require('../controllers/authController');
+const { register, login, getProfile, deleteAccount, changePassword } = require('../controllers/authController');
 const { authenticateToken } = require('../middleware/auth');
 
 /**
@@ -128,5 +128,89 @@ router.post('/login', login);
  *               $ref: '#/components/schemas/Error'
  */
 router.get('/profile', authenticateToken, getProfile);
+
+/**
+ * @swagger
+ * /api/auth/account:
+ *   delete:
+ *     summary: Account löschen
+ *     description: Löscht den eigenen Account. Nur für selbst-registrierte Nutzer (nicht für Schüler, die von Lehrern erstellt wurden).
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Account erfolgreich gelöscht
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       403:
+ *         description: Account kann nicht gelöscht werden (von Lehrer erstellt)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Nicht authentifiziert
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.delete('/account', authenticateToken, deleteAccount);
+
+/**
+ * @swagger
+ * /api/auth/password:
+ *   put:
+ *     summary: Passwort ändern
+ *     description: Ändert das Passwort des angemeldeten Benutzers
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - currentPassword
+ *               - newPassword
+ *             properties:
+ *               currentPassword:
+ *                 type: string
+ *                 example: altesPasswort123
+ *               newPassword:
+ *                 type: string
+ *                 example: neuesPasswort456
+ *     responses:
+ *       200:
+ *         description: Passwort erfolgreich geändert
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: Validierungsfehler
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Aktuelles Passwort falsch oder nicht authentifiziert
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.put('/password', authenticateToken, changePassword);
 
 module.exports = router;

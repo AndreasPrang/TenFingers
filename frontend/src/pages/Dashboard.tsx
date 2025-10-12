@@ -118,6 +118,9 @@ const Dashboard: React.FC = () => {
         <button className="btn-action" onClick={() => navigate('/lessons')}>
           Zu den Lektionen
         </button>
+        <button className="btn-settings" onClick={() => navigate('/settings')}>
+          Einstellungen
+        </button>
       </div>
     </div>
   );

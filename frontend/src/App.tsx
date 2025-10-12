@@ -11,6 +11,7 @@ import Lessons from './pages/Lessons';
 import Practice from './pages/Practice';
 import TeacherDashboard from './pages/TeacherDashboard';
 import ClassManagement from './pages/ClassManagement';
+import Settings from './pages/Settings';
 import Privacy from './pages/Privacy';
 import Imprint from './pages/Imprint';
 import './App.css';
@@ -113,6 +114,14 @@ function AppContent() {
             element={
               <ProtectedRoute>
                 <ClassManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <Settings />
               </ProtectedRoute>
             }
           />

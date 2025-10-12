@@ -76,6 +76,7 @@ const register = async (req, res) => {
         username: user.username,
         email: user.email,
         role: user.role,
+        class_id: null,
         createdAt: user.created_at
       },
       token
@@ -127,7 +128,8 @@ const login = async (req, res) => {
         id: user.id,
         username: user.username,
         email: user.email,
-        role: user.role
+        role: user.role,
+        class_id: user.class_id
       },
       token
     });
@@ -142,7 +144,7 @@ const getProfile = async (req, res) => {
     const userId = req.user.userId;
 
     const result = await pool.query(
-      `SELECT u.id, u.username, u.email, u.created_at,
+      `SELECT u.id, u.username, u.email, u.role, u.class_id, u.created_at,
               s.total_lessons_completed, s.average_wpm, s.average_accuracy, s.total_practice_time
        FROM users u
        LEFT JOIN user_stats s ON u.id = s.user_id
@@ -161,4 +163,90 @@ const getProfile = async (req, res) => {
   }
 };
 
-module.exports = { register, login, getProfile };
+const deleteAccount = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    // Hole User-Daten um class_id zu prüfen
+    const userResult = await pool.query(
+      'SELECT class_id, role FROM users WHERE id = $1',
+      [userId]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Benutzer nicht gefunden' });
+    }
+
+    const user = userResult.rows[0];
+
+    // Prüfe ob User zu einer Klasse gehört (wurde von Lehrer erstellt)
+    if (user.class_id !== null) {
+      return res.status(403).json({
+        error: 'Schüler-Accounts, die von Lehrern erstellt wurden, können nicht selbst gelöscht werden. Bitte kontaktiere deinen Lehrer.'
+      });
+    }
+
+    // Lösche Account (CASCADE löscht automatisch progress, user_stats, und classes wenn Lehrer)
+    await pool.query(
+      'DELETE FROM users WHERE id = $1',
+      [userId]
+    );
+
+    res.json({ message: 'Account erfolgreich gelöscht' });
+  } catch (error) {
+    console.error('Fehler beim Löschen des Accounts:', error);
+    res.status(500).json({ error: 'Serverfehler beim Löschen des Accounts' });
+  }
+};
+
+const changePassword = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { currentPassword, newPassword } = req.body;
+
+    // Validierung
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Aktuelles und neues Passwort sind erforderlich' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'Neues Passwort muss mindestens 6 Zeichen lang sein' });
+    }
+
+    // Hole aktuellen User
+    const userResult = await pool.query(
+      'SELECT password_hash FROM users WHERE id = $1',
+      [userId]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Benutzer nicht gefunden' });
+    }
+
+    const user = userResult.rows[0];
+
+    // Prüfe aktuelles Passwort
+    const validPassword = await bcrypt.compare(currentPassword, user.password_hash);
+
+    if (!validPassword) {
+      return res.status(401).json({ error: 'Aktuelles Passwort ist falsch' });
+    }
+
+    // Hash neues Passwort
+    const saltRounds = 10;
+    const newPasswordHash = await bcrypt.hash(newPassword, saltRounds);
+
+    // Update Passwort
+    await pool.query(
+      'UPDATE users SET password_hash = $1 WHERE id = $2',
+      [newPasswordHash, userId]
+    );
+
+    res.json({ message: 'Passwort erfolgreich geändert' });
+  } catch (error) {
+    console.error('Fehler beim Ändern des Passworts:', error);
+    res.status(500).json({ error: 'Serverfehler beim Ändern des Passworts' });
+  }
+};
+
+module.exports = { register, login, getProfile, deleteAccount, changePassword };

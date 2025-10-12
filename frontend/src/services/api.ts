@@ -40,6 +40,19 @@ export const authAPI = {
     const response = await api.get('/api/auth/profile');
     return response.data;
   },
+
+  deleteAccount: async (): Promise<{ message: string }> => {
+    const response = await api.delete('/api/auth/account');
+    return response.data;
+  },
+
+  changePassword: async (currentPassword: string, newPassword: string): Promise<{ message: string }> => {
+    const response = await api.put('/api/auth/password', {
+      currentPassword,
+      newPassword
+    });
+    return response.data;
+  },
 };
 
 // Lessons API
