@@ -1,8 +1,17 @@
 const { Pool } = require('pg');
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
+// Unterstütze sowohl DATABASE_URL als auch individuelle Variablen
+const pool = new Pool(
+  process.env.DATABASE_URL
+    ? { connectionString: process.env.DATABASE_URL }
+    : {
+        host: process.env.DB_HOST || 'localhost',
+        port: process.env.DB_PORT || 5432,
+        database: process.env.DB_NAME || 'tenfingers',
+        user: process.env.DB_USER || 'tenfingers_user',
+        password: process.env.DB_PASSWORD,
+      }
+);
 
 // Teste die Verbindung beim Start
 pool.connect((err, client, release) => {
