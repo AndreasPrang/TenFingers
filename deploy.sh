@@ -202,10 +202,19 @@ fi
 # Exportiere für docker-compose
 export IMAGE_TAG
 
+# ======================
+# 10. Environment-Variablen für docker-compose laden
+# ======================
+info "Lade Environment-Variablen..."
+set -a  # Automatisch alle Variablen exportieren
+source /var/www/TenFingers/.env.production
+set +a
+success "Environment-Variablen geladen"
+
 success "Image Tag: $IMAGE_TAG"
 
 # ======================
-# 10. Docker Images pullen
+# 11. Docker Images pullen
 # ======================
 info "Lade Docker Images von GitHub Container Registry..."
 docker-compose -f docker-compose.prod.yml pull

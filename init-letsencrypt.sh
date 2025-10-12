@@ -6,6 +6,13 @@
 
 set -e
 
+# Load environment variables from .env.production
+if [ -f ".env.production" ]; then
+    set -a
+    source .env.production
+    set +a
+fi
+
 domains="DOMAIN_PLACEHOLDER"
 rsa_key_size=4096
 email="EMAIL_PLACEHOLDER" # Adding a valid address is strongly recommended
@@ -15,10 +22,10 @@ echo "### Downloading recommended TLS parameters ..."
 docker-compose -f docker-compose.prod.yml run --rm --entrypoint "\
   sh -c '\
     if [ ! -e /etc/letsencrypt/options-ssl-nginx.conf ]; then \
-      curl -s https://raw.githubusercontent.com/certbot/certbot/master/certbot-nginx/certbot_nginx/_internal/tls_configs/options-ssl-nginx.conf > /etc/letsencrypt/options-ssl-nginx.conf; \
+      wget -q -O /etc/letsencrypt/options-ssl-nginx.conf https://raw.githubusercontent.com/certbot/certbot/master/certbot-nginx/certbot_nginx/_internal/tls_configs/options-ssl-nginx.conf; \
     fi && \
     if [ ! -e /etc/letsencrypt/ssl-dhparams.pem ]; then \
-      curl -s https://raw.githubusercontent.com/certbot/certbot/master/certbot/certbot/ssl-dhparams.pem > /etc/letsencrypt/ssl-dhparams.pem; \
+      wget -q -O /etc/letsencrypt/ssl-dhparams.pem https://raw.githubusercontent.com/certbot/certbot/master/certbot/certbot/ssl-dhparams.pem; \
     fi \
   '" certbot
 echo
