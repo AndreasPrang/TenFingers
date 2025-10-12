@@ -125,9 +125,9 @@ echo -e "${NC}"
 if [ ! -f "/var/www/TenFingers/.env.production" ]; then
     info "Erstelle .env.production mit sicheren Credentials..."
 
-    # Generiere sichere Passwörter
-    DB_PASSWORD=$(openssl rand -base64 32)
-    JWT_SECRET=$(openssl rand -base64 64)
+    # Generiere sichere Passwörter (hex statt base64 - keine Sonderzeichen)
+    DB_PASSWORD=$(openssl rand -hex 32)
+    JWT_SECRET=$(openssl rand -hex 64)
 
     # Erstelle .env.production
     cat > /var/www/TenFingers/.env.production <<EOF
