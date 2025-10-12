@@ -39,6 +39,28 @@ app.get('/api-docs.json', (req, res) => {
 });
 
 // Health Check
+app.get('/api/health', async (req, res) => {
+  try {
+    // Prüfe Datenbank-Verbindung
+    const { pool } = require('./config/database');
+    await pool.query('SELECT 1');
+
+    res.json({
+      status: 'ok',
+      message: 'TenFingers API läuft',
+      timestamp: new Date().toISOString(),
+      database: 'connected'
+    });
+  } catch (error) {
+    res.status(503).json({
+      status: 'error',
+      message: 'Datenbank nicht verfügbar',
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+// Legacy health endpoint (für Kompatibilität)
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'TenFingers API läuft' });
 });

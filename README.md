@@ -58,6 +58,37 @@ docker-compose up --build
 - Backend API: http://localhost:4000
 - API Dokumentation: http://localhost:4000/api-docs
 
+## VPS-Deployment (Production)
+
+### Automatisches Deployment
+
+Für ein vollautomatisches Deployment auf einem VPS:
+
+```bash
+# Auf dem VPS als root:
+wget https://raw.githubusercontent.com/AndreasPrang/TenFingers/main/deploy.sh
+chmod +x deploy.sh
+sudo ./deploy.sh
+```
+
+### Manuelles Deployment
+
+Detaillierte Anleitung für manuelles Deployment:
+
+```bash
+# Deployment-Guide anzeigen
+cat DEPLOYMENT.md
+```
+
+Die vollständige Deployment-Dokumentation findest du in [DEPLOYMENT.md](DEPLOYMENT.md)
+
+### Voraussetzungen für Production
+
+- Ubuntu 20.04+ VPS
+- Mindestens 2 GB RAM
+- Domain mit DNS A-Record
+- SSL-Zertifikat (Let's Encrypt)
+
 ## Projekt-Struktur
 
 ```
