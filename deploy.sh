@@ -193,31 +193,27 @@ if [ "$SETUP_SSL" = "j" ] || [ "$SETUP_SSL" = "J" ]; then
     read -p "Gib deine E-Mail für Let's Encrypt ein: " EMAIL
     echo -e "${NC}"
 
-    info "Richte SSL-Zertifikat ein (über certbot Docker-Container)..."
+    info "Richte SSL-Zertifikat ein mit Dummy-Zertifikaten..."
 
-    # Certbot im Docker-Container ausführen
-    docker-compose -f docker-compose.prod.yml run --rm certbot \
-        certonly --webroot --webroot-path=/var/www/certbot \
-        -d "$DOMAIN" \
-        --email "$EMAIL" \
-        --agree-tos \
-        --no-eff-email \
-        --force-renewal
+    # Konfiguriere init-letsencrypt.sh Script
+    cd /var/www/TenFingers
+    cp init-letsencrypt.sh init-letsencrypt-configured.sh
+    sed -i "s/DOMAIN_PLACEHOLDER/$DOMAIN/g" init-letsencrypt-configured.sh
+    sed -i "s/EMAIL_PLACEHOLDER/$EMAIL/g" init-letsencrypt-configured.sh
+    chmod +x init-letsencrypt-configured.sh
+
+    # Führe init-letsencrypt Script aus
+    # Es erstellt:
+    # 1. Dummy-Zertifikate (self-signed)
+    # 2. Startet nginx mit Dummy-Certs
+    # 3. Holt echte Let's Encrypt Zertifikate
+    # 4. Ersetzt Dummy durch echte
+    # 5. Reloaded nginx
+    ./init-letsencrypt-configured.sh
 
     if [ $? -eq 0 ]; then
-        success "SSL-Zertifikat erfolgreich erstellt"
-
-        # Aktiviere SSL in nginx.conf
-        info "Aktiviere SSL in nginx.conf..."
-        sed -i 's/# ssl_certificate/ssl_certificate/g' /var/www/TenFingers/nginx.conf
-        sed -i 's/# ssl_certificate_key/ssl_certificate_key/g' /var/www/TenFingers/nginx.conf
-        sed -i 's/# include \/etc\/letsencrypt/include \/etc\/letsencrypt/g' /var/www/TenFingers/nginx.conf
-        sed -i 's/# ssl_dhparam/ssl_dhparam/g' /var/www/TenFingers/nginx.conf
-
-        # Nginx neu laden
-        info "Starte Nginx-Container neu..."
-        docker-compose -f docker-compose.prod.yml restart nginx
-        success "SSL-Zertifikat aktiviert und Nginx neu gestartet"
+        success "SSL-Zertifikat erfolgreich erstellt und aktiviert"
+        rm init-letsencrypt-configured.sh
     else
         error "SSL-Zertifikat konnte nicht erstellt werden. Bitte prüfe die DNS-Einstellungen."
     fi
