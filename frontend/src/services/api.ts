@@ -27,27 +27,27 @@ api.interceptors.request.use(
 // Auth API
 export const authAPI = {
   register: async (username: string, email: string, password: string, role?: string): Promise<AuthResponse> => {
-    const response = await api.post('/api/auth/register', { username, email, password, role });
+    const response = await api.post('/auth/register', { username, email, password, role });
     return response.data;
   },
 
   login: async (username: string, password: string): Promise<AuthResponse> => {
-    const response = await api.post('/api/auth/login', { username, password });
+    const response = await api.post('/auth/login', { username, password });
     return response.data;
   },
 
   getProfile: async () => {
-    const response = await api.get('/api/auth/profile');
+    const response = await api.get('/auth/profile');
     return response.data;
   },
 
   deleteAccount: async (): Promise<{ message: string }> => {
-    const response = await api.delete('/api/auth/account');
+    const response = await api.delete('/auth/account');
     return response.data;
   },
 
   changePassword: async (currentPassword: string, newPassword: string): Promise<{ message: string }> => {
-    const response = await api.put('/api/auth/password', {
+    const response = await api.put('/auth/password', {
       currentPassword,
       newPassword
     });
@@ -58,17 +58,17 @@ export const authAPI = {
 // Lessons API
 export const lessonsAPI = {
   getAllLessons: async (): Promise<Lesson[]> => {
-    const response = await api.get('/api/lessons');
+    const response = await api.get('/lessons');
     return response.data;
   },
 
   getLessonById: async (id: number): Promise<Lesson> => {
-    const response = await api.get(`/api/lessons/${id}`);
+    const response = await api.get(`/lessons/${id}`);
     return response.data;
   },
 
   getLessonsByLevel: async (level: number): Promise<Lesson[]> => {
-    const response = await api.get(`/api/lessons/level/${level}`);
+    const response = await api.get(`/lessons/level/${level}`);
     return response.data;
   },
 };
@@ -81,7 +81,7 @@ export const progressAPI = {
     accuracy: number,
     completed: boolean
   ): Promise<Progress> => {
-    const response = await api.post('/api/progress', {
+    const response = await api.post('/progress', {
       lesson_id,
       wpm,
       accuracy,
@@ -91,17 +91,17 @@ export const progressAPI = {
   },
 
   getUserProgress: async (): Promise<Progress[]> => {
-    const response = await api.get('/api/progress');
+    const response = await api.get('/progress');
     return response.data;
   },
 
   getLessonProgress: async (lessonId: number): Promise<Progress[]> => {
-    const response = await api.get(`/api/progress/lesson/${lessonId}`);
+    const response = await api.get(`/progress/lesson/${lessonId}`);
     return response.data;
   },
 
   getUserStats: async (): Promise<UserStats> => {
-    const response = await api.get('/api/progress/stats');
+    const response = await api.get('/progress/stats');
     return response.data;
   },
 };
@@ -109,17 +109,17 @@ export const progressAPI = {
 // Classes API (nur für Lehrer)
 export const classesAPI = {
   createClass: async (name: string): Promise<Class> => {
-    const response = await api.post('/api/classes', { name });
+    const response = await api.post('/classes', { name });
     return response.data.class;
   },
 
   getTeacherClasses: async (): Promise<Class[]> => {
-    const response = await api.get('/api/classes');
+    const response = await api.get('/classes');
     return response.data;
   },
 
   getClassById: async (id: number): Promise<Class> => {
-    const response = await api.get(`/api/classes/${id}`);
+    const response = await api.get(`/classes/${id}`);
     return response.data;
   },
 
@@ -129,7 +129,7 @@ export const classesAPI = {
     password: string,
     email?: string
   ): Promise<Student> => {
-    const response = await api.post(`/api/classes/${classId}/students`, {
+    const response = await api.post(`/classes/${classId}/students`, {
       username,
       email,
       password,
@@ -141,19 +141,19 @@ export const classesAPI = {
     classId: number,
     names: string[]
   ): Promise<{ students: Array<{ id: number; username: string; password: string; createdAt: string }>; errors?: Array<{ name: string; error: string }> }> => {
-    const response = await api.post(`/api/classes/${classId}/students/bulk`, {
+    const response = await api.post(`/classes/${classId}/students/bulk`, {
       names,
     });
     return response.data;
   },
 
   getClassStudents: async (classId: number): Promise<Student[]> => {
-    const response = await api.get(`/api/classes/${classId}/students`);
+    const response = await api.get(`/classes/${classId}/students`);
     return response.data;
   },
 
   getClassProgress: async (classId: number): Promise<StudentProgress[]> => {
-    const response = await api.get(`/api/classes/${classId}/progress`);
+    const response = await api.get(`/classes/${classId}/progress`);
     return response.data;
   },
 
@@ -164,7 +164,7 @@ export const classesAPI = {
     email?: string,
     password?: string
   ): Promise<Student> => {
-    const response = await api.put(`/api/classes/${classId}/students/${studentId}`, {
+    const response = await api.put(`/classes/${classId}/students/${studentId}`, {
       username,
       email,
       password,
@@ -173,11 +173,11 @@ export const classesAPI = {
   },
 
   deleteStudent: async (classId: number, studentId: number): Promise<void> => {
-    await api.delete(`/api/classes/${classId}/students/${studentId}`);
+    await api.delete(`/classes/${classId}/students/${studentId}`);
   },
 
   deleteClass: async (classId: number): Promise<void> => {
-    await api.delete(`/api/classes/${classId}`);
+    await api.delete(`/classes/${classId}`);
   },
 };
 
