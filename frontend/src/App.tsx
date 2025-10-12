@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
+import Footer from './components/Footer';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -10,6 +11,8 @@ import Lessons from './pages/Lessons';
 import Practice from './pages/Practice';
 import TeacherDashboard from './pages/TeacherDashboard';
 import ClassManagement from './pages/ClassManagement';
+import Privacy from './pages/Privacy';
+import Imprint from './pages/Imprint';
 import './App.css';
 
 // Protected Route Component
@@ -55,6 +58,8 @@ function AppContent() {
         <Navbar />
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/impressum" element={<Imprint />} />
           <Route
             path="/login"
             element={
@@ -112,6 +117,7 @@ function AppContent() {
             }
           />
         </Routes>
+        <Footer />
       </div>
     </Router>
   );

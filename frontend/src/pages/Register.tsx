@@ -9,6 +9,7 @@ const Register: React.FC = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isTeacher, setIsTeacher] = useState(false);
+  const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
@@ -19,6 +20,11 @@ const Register: React.FC = () => {
     setError('');
 
     // Validierung
+    if (!acceptedPrivacy) {
+      setError('Bitte akzeptiere die Datenschutzerklärung');
+      return;
+    }
+
     if (password !== confirmPassword) {
       setError('Passwörter stimmen nicht überein');
       return;
@@ -26,6 +32,12 @@ const Register: React.FC = () => {
 
     if (password.length < 6) {
       setError('Passwort muss mindestens 6 Zeichen lang sein');
+      return;
+    }
+
+    // E-Mail ist Pflicht für Lehrer
+    if (isTeacher && !email) {
+      setError('E-Mail ist für Lehrer-Accounts erforderlich');
       return;
     }
 
@@ -64,16 +76,23 @@ const Register: React.FC = () => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="email">E-Mail</label>
+            <label htmlFor="email">
+              E-Mail {isTeacher ? '(Pflicht für Lehrer)' : '(optional für Schüler)'}
+            </label>
             <input
               type="email"
               id="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="deine@email.de"
-              required
+              placeholder={isTeacher ? 'deine@email.de' : 'optional - nur für Passwort-Reset'}
+              required={isTeacher}
               disabled={loading}
             />
+            {!isTeacher && (
+              <small className="form-hint">
+                Für Schüler ist die E-Mail optional. Sie wird nur für Passwort-Resets benötigt.
+              </small>
+            )}
           </div>
 
           <div className="form-group">
@@ -111,6 +130,22 @@ const Register: React.FC = () => {
                 disabled={loading}
               />
               <span>Ich bin Lehrer und möchte Klassen verwalten</span>
+            </label>
+          </div>
+
+          <div className="form-group checkbox-group privacy-checkbox">
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={acceptedPrivacy}
+                onChange={(e) => setAcceptedPrivacy(e.target.checked)}
+                disabled={loading}
+                required
+              />
+              <span>
+                Ich habe die <Link to="/privacy" target="_blank" className="privacy-link">Datenschutzerklärung</Link> gelesen
+                und stimme der Verarbeitung meiner Daten zu. {!isTeacher && 'Für Schüler unter 16 Jahren ist die Einwilligung der Eltern erforderlich.'}
+              </span>
             </label>
           </div>
 

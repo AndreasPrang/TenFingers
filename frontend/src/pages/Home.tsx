@@ -77,6 +77,86 @@ const Home: React.FC = () => {
         </div>
       </section>
 
+      <section className="school-section">
+        <div className="school-content">
+          <h2 className="section-title">Für Schulen und Klassen</h2>
+          <p className="section-subtitle">
+            TenFingers ist perfekt für den Einsatz im Informatikunterricht
+          </p>
+
+          <div className="school-grid">
+            <div className="school-feature">
+              <div className="school-icon">👨‍🏫</div>
+              <h3>Lehrer-Dashboard</h3>
+              <p>
+                Erstelle und verwalte Klassen, lege Schüler-Accounts an und behalte den
+                Überblick über den Lernfortschritt deiner Schüler.
+              </p>
+            </div>
+
+            <div className="school-feature">
+              <div className="school-icon">👥</div>
+              <h3>Bulk-Erstellung</h3>
+              <p>
+                Erstelle bis zu 35 Schüler-Accounts gleichzeitig mit automatisch generierten
+                Passwörtern. Exportiere die Zugangsdaten als CSV.
+              </p>
+            </div>
+
+            <div className="school-feature">
+              <div className="school-icon">📈</div>
+              <h3>Fortschritts-Übersicht</h3>
+              <p>
+                Sieh auf einen Blick, welche Schüler welche Lektionen abgeschlossen haben
+                und wie ihre Leistungen sind.
+              </p>
+            </div>
+
+            <div className="school-feature">
+              <div className="school-icon">🔒</div>
+              <h3>DSGVO-konform</h3>
+              <p>
+                Entwickelt mit Datenschutz im Fokus. Server in Deutschland, keine Weitergabe
+                an Dritte, minimale Datenerfassung, E-Mail optional für Schüler.
+              </p>
+            </div>
+
+            <div className="school-feature">
+              <div className="school-icon">🆓</div>
+              <h3>Kostenlos</h3>
+              <p>
+                Komplett kostenlos, keine versteckten Kosten, keine Werbung,
+                keine Premium-Features. Ein nicht-gewerbliches Bildungsprojekt.
+              </p>
+            </div>
+
+            <div className="school-feature">
+              <div className="school-icon">🌐</div>
+              <h3>Keine Installation</h3>
+              <p>
+                Funktioniert direkt im Browser auf allen Geräten. Keine Software-Installation,
+                keine Updates, einfach URL aufrufen und loslegen.
+              </p>
+            </div>
+          </div>
+
+          <div className="school-cta">
+            <h3>Datenschutz für Schulen</h3>
+            <p>
+              Wir nehmen Datenschutz ernst, besonders im Schulkontext. E-Mail-Adressen sind
+              für Schüler optional, es werden keine Tracking-Tools verwendet, und alle Daten
+              bleiben auf Servern in Deutschland. Lehrer können Schüler-Accounts jederzeit
+              vollständig löschen.
+            </p>
+            <p>
+              <Link to="/privacy" className="privacy-link">
+                Vollständige Datenschutzerklärung lesen →
+              </Link>
+            </p>
+          </div>
+        </div>
+      </section>
+
       <section className="demo-section">
         <h2 className="section-title">Interaktive Tastatur</h2>
         <p className="section-subtitle">

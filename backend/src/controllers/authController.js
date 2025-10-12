@@ -6,32 +6,52 @@ const register = async (req, res) => {
   try {
     const { username, email, password, role } = req.body;
 
-    // Validierung
-    if (!username || !email || !password) {
-      return res.status(400).json({ error: 'Alle Felder sind erforderlich' });
-    }
-
     // Validiere Role
     const userRole = role === 'teacher' ? 'teacher' : 'student';
 
-    // Prüfe ob Benutzer bereits existiert
-    const userExists = await pool.query(
-      'SELECT * FROM users WHERE username = $1 OR email = $2',
-      [username, email]
+    // Validierung
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Benutzername und Passwort sind erforderlich' });
+    }
+
+    // E-Mail ist Pflicht für Lehrer
+    if (userRole === 'teacher' && !email) {
+      return res.status(400).json({ error: 'E-Mail ist für Lehrer-Accounts erforderlich' });
+    }
+
+    // Prüfe ob Benutzername bereits existiert
+    const usernameExists = await pool.query(
+      'SELECT * FROM users WHERE username = $1',
+      [username]
     );
 
-    if (userExists.rows.length > 0) {
-      return res.status(400).json({ error: 'Benutzername oder E-Mail bereits vergeben' });
+    if (usernameExists.rows.length > 0) {
+      return res.status(400).json({ error: 'Benutzername bereits vergeben' });
+    }
+
+    // Prüfe ob E-Mail bereits existiert (nur wenn E-Mail angegeben)
+    if (email && email.trim() !== '') {
+      const emailExists = await pool.query(
+        'SELECT * FROM users WHERE email = $1',
+        [email]
+      );
+
+      if (emailExists.rows.length > 0) {
+        return res.status(400).json({ error: 'E-Mail bereits vergeben' });
+      }
     }
 
     // Passwort hashen
     const saltRounds = 10;
     const passwordHash = await bcrypt.hash(password, saltRounds);
 
+    // E-Mail auf null setzen wenn leer
+    const userEmail = (email && email.trim() !== '') ? email : null;
+
     // Benutzer erstellen
     const result = await pool.query(
       'INSERT INTO users (username, email, password_hash, role) VALUES ($1, $2, $3, $4) RETURNING id, username, email, role, created_at',
-      [username, email, passwordHash, userRole]
+      [username, userEmail, passwordHash, userRole]
     );
 
     const user = result.rows[0];

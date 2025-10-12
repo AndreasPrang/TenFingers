@@ -8,6 +8,7 @@ const { authenticateToken } = require('../middleware/auth');
  * /api/auth/register:
  *   post:
  *     summary: Neuen Benutzer registrieren
+ *     description: Registriert einen neuen Benutzer. E-Mail ist nur für Lehrer erforderlich, für Schüler optional.
  *     tags: [Authentication]
  *     requestBody:
  *       required: true
@@ -17,7 +18,6 @@ const { authenticateToken } = require('../middleware/auth');
  *             type: object
  *             required:
  *               - username
- *               - email
  *               - password
  *             properties:
  *               username:
@@ -26,9 +26,15 @@ const { authenticateToken } = require('../middleware/auth');
  *               email:
  *                 type: string
  *                 example: max@example.com
+ *                 description: Optional für Schüler, Pflicht für Lehrer
  *               password:
  *                 type: string
  *                 example: sicheres-passwort
+ *               role:
+ *                 type: string
+ *                 enum: [student, teacher]
+ *                 default: student
+ *                 example: student
  *     responses:
  *       201:
  *         description: Registrierung erfolgreich
