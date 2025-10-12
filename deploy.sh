@@ -77,12 +77,17 @@ fi
 # ======================
 # 4. Firewall konfigurieren
 # ======================
-info "Konfiguriere Firewall..."
-ufw allow OpenSSH
-ufw allow 80/tcp
-ufw allow 443/tcp
-ufw --force enable
-success "Firewall konfiguriert"
+if command -v ufw &> /dev/null; then
+    info "Konfiguriere Firewall (ufw)..."
+    ufw allow OpenSSH
+    ufw allow 80/tcp
+    ufw allow 443/tcp
+    ufw --force enable
+    success "Firewall konfiguriert"
+else
+    info "UFW nicht gefunden, überspringe Firewall-Konfiguration"
+    echo -e "${YELLOW}Hinweis: Stelle sicher, dass die Ports 22, 80 und 443 in deiner Firewall geöffnet sind${NC}"
+fi
 
 # ======================
 # 5. Arbeitsverzeichnis erstellen
