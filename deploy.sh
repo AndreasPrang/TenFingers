@@ -113,21 +113,68 @@ else
 fi
 
 # ======================
-# 7. Environment-Variablen prüfen
-# ======================
-if [ ! -f "/var/www/TenFingers/.env.production" ]; then
-    error ".env.production Datei fehlt! Bitte erstelle /var/www/TenFingers/.env.production basierend auf .env.production.example"
-fi
-
-success "Environment-Variablen gefunden"
-
-# ======================
-# 8. Domain konfigurieren
+# 7. Domain abfragen
 # ======================
 echo -e "${YELLOW}"
 read -p "Gib deine Domain ein (z.B. example.com): " DOMAIN
 echo -e "${NC}"
 
+# ======================
+# 8. Environment-Variablen erstellen/prüfen
+# ======================
+if [ ! -f "/var/www/TenFingers/.env.production" ]; then
+    info "Erstelle .env.production mit sicheren Credentials..."
+
+    # Generiere sichere Passwörter
+    DB_PASSWORD=$(openssl rand -base64 32)
+    JWT_SECRET=$(openssl rand -base64 64)
+
+    # Erstelle .env.production
+    cat > /var/www/TenFingers/.env.production <<EOF
+# TenFingers Production Environment
+# Automatisch generiert am $(date)
+
+# Docker Image Version
+IMAGE_TAG=latest
+
+# PostgreSQL Datenbank
+DB_HOST=postgres
+DB_PORT=5432
+DB_NAME=tenfingers
+DB_USER=tenfingers_user
+DB_PASSWORD=$DB_PASSWORD
+
+# JWT Secret
+JWT_SECRET=$JWT_SECRET
+
+# Server Konfiguration
+PORT=4000
+NODE_ENV=production
+
+# URLs (basierend auf deiner Domain: $DOMAIN)
+FRONTEND_URL=https://$DOMAIN
+REACT_APP_API_URL=https://$DOMAIN/api
+EOF
+
+    success ".env.production erstellt mit sicheren Credentials!"
+    echo ""
+    echo -e "${GREEN}╔═══════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${GREEN}║  WICHTIG: Speichere diese Credentials sicher!                ║${NC}"
+    echo -e "${GREEN}╚═══════════════════════════════════════════════════════════════╝${NC}"
+    echo ""
+    echo -e "${BLUE}DB_PASSWORD:${NC} $DB_PASSWORD"
+    echo -e "${BLUE}JWT_SECRET:${NC}  $JWT_SECRET"
+    echo ""
+    echo -e "${YELLOW}Diese Werte wurden in /var/www/TenFingers/.env.production gespeichert${NC}"
+    echo ""
+    read -p "Drücke Enter um fortzufahren..."
+else
+    success "Environment-Variablen gefunden"
+fi
+
+# ======================
+# 9. Domain in nginx.conf konfigurieren
+# ======================
 info "Konfiguriere Domain in nginx.conf..."
 sed -i "s/deine-domain.de/$DOMAIN/g" /var/www/TenFingers/nginx.conf
 success "Domain konfiguriert: $DOMAIN"
