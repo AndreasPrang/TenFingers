@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "chrome-devtools": {
+      "command": "/opt/homebrew/bin/chrome-devtools-mcp",
+      "args": [
+        "--viewport",
+        "1920x1080"
+      ],
+      "env": {}
+    }
+  }
+}

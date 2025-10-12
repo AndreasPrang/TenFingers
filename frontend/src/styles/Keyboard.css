@@ -1,0 +1,216 @@
+.keyboard {
+  padding: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.keyboard-row {
+  display: flex;
+  justify-content: flex-start;
+  gap: 5px;
+  margin-bottom: 5px;
+  padding-left: 20px;
+}
+
+/* Reihe 0: Zahlenreihe - keine Einrückung */
+.keyboard-row.row-0 {
+  padding-left: 20px;
+}
+
+/* Reihe 1: QWERTZ - leicht eingerückt (Tab-Taste) */
+.keyboard-row.row-1 {
+  padding-left: 60px;
+}
+
+/* Reihe 2: ASDFG - mehr eingerückt (Caps Lock) */
+.keyboard-row.row-2 {
+  padding-left: 75px;
+}
+
+/* Reihe 3: YXC - noch mehr eingerückt (Shift-Taste) */
+.keyboard-row.row-3 {
+  padding-left: 95px;
+}
+
+/* Reihe 4: Leertaste - zentriert */
+.keyboard-row.row-4 {
+  justify-content: center;
+  padding-left: 20px;
+}
+
+.key {
+  background: #ffffff;
+  border: 2px solid #e0e0e0;
+  border-radius: 5px;
+  padding: 15px;
+  min-width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 16px;
+  transition: all 0.2s ease;
+  position: relative;
+  cursor: default;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.key-label {
+  text-transform: uppercase;
+  color: #333;
+}
+
+/* Home Row Markierung */
+.key.home-row {
+  border-bottom: 4px solid #4CAF50;
+}
+
+/* Finger-Farben */
+.key.finger-pinky-left {
+  background: linear-gradient(135deg, #FFB3BA, #FFCCCB);
+}
+
+.key.finger-ring-left {
+  background: linear-gradient(135deg, #BAE1FF, #B5D8FF);
+}
+
+.key.finger-middle-left {
+  background: linear-gradient(135deg, #BAFFC9, #B5FFD0);
+}
+
+.key.finger-index-left {
+  background: linear-gradient(135deg, #FFFFBA, #FFFFC0);
+}
+
+.key.finger-index-right {
+  background: linear-gradient(135deg, #FFFFBA, #FFFFC0);
+}
+
+.key.finger-middle-right {
+  background: linear-gradient(135deg, #BAFFC9, #B5FFD0);
+}
+
+.key.finger-ring-right {
+  background: linear-gradient(135deg, #BAE1FF, #B5D8FF);
+}
+
+.key.finger-pinky-right {
+  background: linear-gradient(135deg, #FFB3BA, #FFCCCB);
+}
+
+.key.finger-thumb {
+  background: linear-gradient(135deg, #E0BBE4, #D4A5D6);
+}
+
+/* Aktueller Ziel-Key */
+.key.current {
+  background: linear-gradient(135deg, #FFD700, #FFA500) !important;
+  border: 3px solid #FF8C00;
+  transform: scale(1.1);
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1.1);
+  }
+  50% {
+    transform: scale(1.15);
+  }
+}
+
+/* Gedrückter Key */
+.key.pressed {
+  background: linear-gradient(135deg, #4CAF50, #45a049) !important;
+  transform: scale(0.95);
+  box-shadow: 0 2px 10px rgba(76, 175, 80, 0.6);
+}
+
+.key.pressed .key-label {
+  color: white;
+}
+
+/* Hervorgehobene Keys */
+.key.highlighted {
+  border: 2px solid #2196F3;
+  box-shadow: 0 0 10px rgba(33, 150, 243, 0.5);
+}
+
+/* Finger-Legende */
+.finger-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 20px;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 10px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #333;
+}
+
+.legend-color {
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+  border: 1px solid #999;
+}
+
+.legend-color.pinky-left,
+.legend-color.pinky-right {
+  background: linear-gradient(135deg, #FFB3BA, #FFCCCB);
+}
+
+.legend-color.ring-left,
+.legend-color.ring-right {
+  background: linear-gradient(135deg, #BAE1FF, #B5D8FF);
+}
+
+.legend-color.middle-left,
+.legend-color.middle-right {
+  background: linear-gradient(135deg, #BAFFC9, #B5FFD0);
+}
+
+.legend-color.index-left,
+.legend-color.index-right {
+  background: linear-gradient(135deg, #FFFFBA, #FFFFC0);
+}
+
+.legend-color.thumb {
+  background: linear-gradient(135deg, #E0BBE4, #D4A5D6);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .keyboard {
+    padding: 10px;
+  }
+
+  .key {
+    min-width: 35px;
+    height: 35px;
+    padding: 10px;
+    font-size: 12px;
+  }
+
+  .finger-legend {
+    font-size: 10px;
+  }
+
+  .legend-color {
+    width: 15px;
+    height: 15px;
+  }
+}
