@@ -13,19 +13,22 @@
 }
 
 .btn-back {
-  padding: 10px 20px;
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
+  padding: 12px 24px;
+  background: white;
+  color: #667eea;
   border: 2px solid white;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 16px;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .btn-back:hover {
-  background: white;
-  color: #667eea;
+  background: rgba(255, 255, 255, 0.95);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
 }
 
 .lesson-info {

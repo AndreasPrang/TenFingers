@@ -34,6 +34,24 @@ const Practice: React.FC = () => {
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    // Reset all states when lesson changes
+    setStarted(false);
+    setFinished(false);
+    setCurrentIndex(0);
+    setUserInput('');
+    setErrors([]);
+    setErrorAttempts(0);
+    setPracticeText('');
+    startTime.current = 0;
+    setStats({
+      wpm: 0,
+      accuracy: 100,
+      correctChars: 0,
+      incorrectChars: 0,
+      totalChars: 0,
+    });
+    setLoading(true);
+
     loadLesson();
   }, [id]);
 
