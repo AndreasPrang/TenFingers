@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { lessonsAPI, progressAPI } from '../services/api';
 import { Lesson, Progress } from '../types';
+import { useAuth } from '../context/AuthContext';
 import '../styles/Lessons.css';
 
 const Lessons: React.FC = () => {
@@ -9,6 +10,7 @@ const Lessons: React.FC = () => {
   const [userProgress, setUserProgress] = useState<Progress[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -17,12 +19,19 @@ const Lessons: React.FC = () => {
 
   const loadData = async () => {
     try {
-      const [lessonsData, progressData] = await Promise.all([
-        lessonsAPI.getAllLessons(),
-        progressAPI.getUserProgress(),
-      ]);
+      const lessonsData = await lessonsAPI.getAllLessons();
       setLessons(lessonsData);
-      setUserProgress(progressData);
+
+      // Fortschritt nur laden, wenn Benutzer eingeloggt ist
+      if (isAuthenticated) {
+        try {
+          const progressData = await progressAPI.getUserProgress();
+          setUserProgress(progressData);
+        } catch (err) {
+          console.error('Fehler beim Laden des Fortschritts:', err);
+          // Fortschritt-Fehler nicht als kritisch behandeln
+        }
+      }
     } catch (err) {
       setError('Fehler beim Laden der Lektionen');
       console.error(err);
@@ -69,6 +78,14 @@ const Lessons: React.FC = () => {
       <header className="lessons-header">
         <h1>Lektionen</h1>
         <p>Wähle eine Lektion aus, um mit dem Üben zu beginnen</p>
+        {!isAuthenticated && (
+          <div className="guest-info-banner">
+            💡 <strong>Tipp:</strong> Registriere dich kostenlos, um deinen Fortschritt zu speichern und zu verfolgen!
+            <button className="btn-register-inline" onClick={() => navigate('/register')}>
+              Jetzt registrieren
+            </button>
+          </div>
+        )}
       </header>
 
       <div className="lessons-grid">

@@ -20,6 +20,45 @@
   opacity: 0.9;
 }
 
+.guest-info-banner {
+  max-width: 800px;
+  margin: 20px auto 0;
+  background: linear-gradient(135deg, #2196F3, #1976D2);
+  color: white;
+  padding: 20px 25px;
+  border-radius: 12px;
+  font-size: 16px;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.guest-info-banner strong {
+  font-weight: 700;
+}
+
+.btn-register-inline {
+  padding: 10px 20px;
+  background: white;
+  color: #1976D2;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.btn-register-inline:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
 .lessons-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));

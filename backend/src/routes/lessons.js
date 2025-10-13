@@ -7,10 +7,8 @@ const { authenticateToken } = require('../middleware/auth');
  * @swagger
  * /api/lessons:
  *   get:
- *     summary: Alle Lektionen abrufen
+ *     summary: Alle Lektionen abrufen (öffentlich zugänglich)
  *     tags: [Lessons]
- *     security:
- *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Liste aller Lektionen
@@ -20,23 +18,15 @@ const { authenticateToken } = require('../middleware/auth');
  *               type: array
  *               items:
  *                 $ref: '#/components/schemas/Lesson'
- *       401:
- *         description: Nicht authentifiziert
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
  */
-router.get('/', authenticateToken, getAllLessons);
+router.get('/', getAllLessons);
 
 /**
  * @swagger
  * /api/lessons/{id}:
  *   get:
- *     summary: Einzelne Lektion abrufen
+ *     summary: Einzelne Lektion abrufen (öffentlich zugänglich)
  *     tags: [Lessons]
- *     security:
- *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -58,16 +48,14 @@ router.get('/', authenticateToken, getAllLessons);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get('/:id', authenticateToken, getLessonById);
+router.get('/:id', getLessonById);
 
 /**
  * @swagger
  * /api/lessons/level/{level}:
  *   get:
- *     summary: Lektionen nach Level abrufen
+ *     summary: Lektionen nach Level abrufen (öffentlich zugänglich)
  *     tags: [Lessons]
- *     security:
- *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: level
@@ -85,6 +73,6 @@ router.get('/:id', authenticateToken, getLessonById);
  *               items:
  *                 $ref: '#/components/schemas/Lesson'
  */
-router.get('/level/:level', authenticateToken, getLessonsByLevel);
+router.get('/level/:level', getLessonsByLevel);
 
 module.exports = router;
