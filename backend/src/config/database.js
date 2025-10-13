@@ -23,6 +23,91 @@ pool.connect((err, client, release) => {
   }
 });
 
+// Definition der Standard-Lektionen
+const getDefaultLessons = () => {
+  const homePracticeTexts = require('./homePracticeTexts');
+
+  return [
+    {
+      title: 'Freies Training',
+      description: 'Übe mit 110 verschiedenen jugendgerechten Sätzen - bei jedem Start wird ein zufälliger Text ausgewählt!',
+      level: 0,
+      text_content: homePracticeTexts.join('|'),
+      target_keys: 'alle'
+    },
+    {
+      title: 'Grundreihe - ASDF JKL',
+      description: 'Lerne die Grundposition deiner Finger auf der Tastatur',
+      level: 1,
+      text_content: 'asdf jkl asdf jkl fff jjj aaa lll sss kkk ddd fff jjj',
+      target_keys: 'asdf jkl'
+    },
+    {
+      title: 'Grundreihe - Erweitert',
+      description: 'Übe alle Buchstaben der Grundreihe',
+      level: 2,
+      text_content: 'asdf jkl geh fall has das falllag glas half flak',
+      target_keys: 'asdfghjkl'
+    },
+    {
+      title: 'Obere Reihe - QWE RUI',
+      description: 'Erweitere dein Können auf die obere Reihe',
+      level: 3,
+      text_content: 'wir euer quere rue aqua drei wer wie reihe weiss',
+      target_keys: 'qwerui'
+    },
+    {
+      title: 'Obere Reihe - Komplett',
+      description: 'Alle Buchstaben der oberen Reihe',
+      level: 4,
+      text_content: 'quer top port zwei typ reiter port power query top',
+      target_keys: 'qwertzuiop'
+    },
+    {
+      title: 'Untere Reihe - YXC VBN',
+      description: 'Lerne die untere Reihe kennen',
+      level: 5,
+      text_content: 'mix box cyan neben brav nova mixen babyixen',
+      target_keys: 'yxcvbn'
+    },
+    {
+      title: 'Alle Buchstaben',
+      description: 'Kombiniere alle gelernten Buchstaben',
+      level: 6,
+      text_content: 'das schnelle braune pferd springt ueber den faulen hund',
+      target_keys: 'alle'
+    },
+    {
+      title: 'Zahlen 1-5',
+      description: 'Übe die Zahlen der linken Hand',
+      level: 7,
+      text_content: '123 234 345 111 222 333 444 555 1234 2345 3451',
+      target_keys: '12345'
+    },
+    {
+      title: 'Zahlen 6-0',
+      description: 'Übe die Zahlen der rechten Hand',
+      level: 8,
+      text_content: '678 789 890 666 777 888 999 000 6789 7890 8901',
+      target_keys: '67890'
+    },
+    {
+      title: 'Satzzeichen',
+      description: 'Lerne die wichtigsten Satzzeichen',
+      level: 9,
+      text_content: 'hallo, wie geht es dir? mir geht es gut! super. toll!',
+      target_keys: ',.!?'
+    },
+    {
+      title: 'Freier Text',
+      description: 'Teste deine Fähigkeiten mit einem kompletten Text',
+      level: 10,
+      text_content: 'übung macht den meister. je mehr du tippst, desto schneller wirst du. bleib am ball und du wirst erfolg haben!',
+      target_keys: 'alle'
+    }
+  ];
+};
+
 // Migrationen für bestehende Datenbanken
 const runMigrations = async () => {
   try {
@@ -57,27 +142,41 @@ const runMigrations = async () => {
       console.log('✓ Migration: email-Feld ist jetzt optional');
     }
 
-    // Migration: Füge Lektion 0 (Freies Training) hinzu, falls nicht vorhanden
-    const checkLesson0 = await pool.query(`
-      SELECT id FROM lessons WHERE level = 0
-    `);
-
-    if (checkLesson0.rows.length === 0) {
-      const homePracticeTexts = require('./homePracticeTexts');
-      await pool.query(
-        'INSERT INTO lessons (title, description, level, text_content, target_keys) VALUES ($1, $2, $3, $4, $5)',
-        [
-          'Freies Training',
-          'Übe mit 110 verschiedenen jugendgerechten Sätzen - bei jedem Start wird ein zufälliger Text ausgewählt!',
-          0,
-          homePracticeTexts.join('|'),
-          'alle'
-        ]
-      );
-      console.log('✓ Migration: Lektion 0 (Freies Training) hinzugefügt');
-    }
+    // Migration: Synchronisiere Standard-Lektionen
+    await syncDefaultLessons();
   } catch (error) {
     console.error('Fehler bei Migrationen:', error);
+  }
+};
+
+// Synchronisiere Standard-Lektionen mit der Datenbank
+const syncDefaultLessons = async () => {
+  try {
+    const defaultLessons = getDefaultLessons();
+
+    // Hole alle existierenden Lektionen
+    const existingLessons = await pool.query('SELECT level FROM lessons');
+    const existingLevels = new Set(existingLessons.rows.map(row => row.level));
+
+    let addedCount = 0;
+
+    // Füge fehlende Lektionen hinzu
+    for (const lesson of defaultLessons) {
+      if (!existingLevels.has(lesson.level)) {
+        await pool.query(
+          'INSERT INTO lessons (title, description, level, text_content, target_keys) VALUES ($1, $2, $3, $4, $5)',
+          [lesson.title, lesson.description, lesson.level, lesson.text_content, lesson.target_keys]
+        );
+        addedCount++;
+        console.log(`✓ Lektion ${lesson.level} hinzugefügt: ${lesson.title}`);
+      }
+    }
+
+    if (addedCount > 0) {
+      console.log(`✓ ${addedCount} neue Lektion(en) zur Datenbank hinzugefügt`);
+    }
+  } catch (error) {
+    console.error('Fehler beim Synchronisieren der Lektionen:', error);
   }
 };
 
@@ -163,87 +262,7 @@ const initDatabase = async () => {
 };
 
 const insertDefaultLessons = async () => {
-  const homePracticeTexts = require('./homePracticeTexts');
-
-  const lessons = [
-    {
-      title: 'Freies Training',
-      description: 'Übe mit 110 verschiedenen jugendgerechten Sätzen - bei jedem Start wird ein zufälliger Text ausgewählt!',
-      level: 0,
-      text_content: homePracticeTexts.join('|'), // Alle Texte mit | getrennt
-      target_keys: 'alle'
-    },
-    {
-      title: 'Grundreihe - ASDF JKL',
-      description: 'Lerne die Grundposition deiner Finger auf der Tastatur',
-      level: 1,
-      text_content: 'asdf jkl asdf jkl fff jjj aaa lll sss kkk ddd fff jjj',
-      target_keys: 'asdf jkl'
-    },
-    {
-      title: 'Grundreihe - Erweitert',
-      description: 'Übe alle Buchstaben der Grundreihe',
-      level: 2,
-      text_content: 'asdf jkl geh fall has das falllag glas half flak',
-      target_keys: 'asdfghjkl'
-    },
-    {
-      title: 'Obere Reihe - QWE RUI',
-      description: 'Erweitere dein Können auf die obere Reihe',
-      level: 3,
-      text_content: 'wir euer quere rue aqua drei wer wie reihe weiss',
-      target_keys: 'qwerui'
-    },
-    {
-      title: 'Obere Reihe - Komplett',
-      description: 'Alle Buchstaben der oberen Reihe',
-      level: 4,
-      text_content: 'quer top port zwei typ reiter port power query top',
-      target_keys: 'qwertzuiop'
-    },
-    {
-      title: 'Untere Reihe - YXC VBN',
-      description: 'Lerne die untere Reihe kennen',
-      level: 5,
-      text_content: 'mix box cyan neben brav nova mixen babyixen',
-      target_keys: 'yxcvbn'
-    },
-    {
-      title: 'Alle Buchstaben',
-      description: 'Kombiniere alle gelernten Buchstaben',
-      level: 6,
-      text_content: 'das schnelle braune pferd springt ueber den faulen hund',
-      target_keys: 'alle'
-    },
-    {
-      title: 'Zahlen 1-5',
-      description: 'Übe die Zahlen der linken Hand',
-      level: 7,
-      text_content: '123 234 345 111 222 333 444 555 1234 2345 3451',
-      target_keys: '12345'
-    },
-    {
-      title: 'Zahlen 6-0',
-      description: 'Übe die Zahlen der rechten Hand',
-      level: 8,
-      text_content: '678 789 890 666 777 888 999 000 6789 7890 8901',
-      target_keys: '67890'
-    },
-    {
-      title: 'Satzzeichen',
-      description: 'Lerne die wichtigsten Satzzeichen',
-      level: 9,
-      text_content: 'hallo, wie geht es dir? mir geht es gut! super. toll!',
-      target_keys: ',.!?'
-    },
-    {
-      title: 'Freier Text',
-      description: 'Teste deine Fähigkeiten mit einem kompletten Text',
-      level: 10,
-      text_content: 'übung macht den meister. je mehr du tippst, desto schneller wirst du. bleib am ball und du wirst erfolg haben!',
-      target_keys: 'alle'
-    }
-  ];
+  const lessons = getDefaultLessons();
 
   for (const lesson of lessons) {
     await pool.query(
