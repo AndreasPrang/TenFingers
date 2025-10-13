@@ -56,6 +56,26 @@ const runMigrations = async () => {
       `);
       console.log('✓ Migration: email-Feld ist jetzt optional');
     }
+
+    // Migration: Füge Lektion 0 (Freies Training) hinzu, falls nicht vorhanden
+    const checkLesson0 = await pool.query(`
+      SELECT id FROM lessons WHERE level = 0
+    `);
+
+    if (checkLesson0.rows.length === 0) {
+      const homePracticeTexts = require('./homePracticeTexts');
+      await pool.query(
+        'INSERT INTO lessons (title, description, level, text_content, target_keys) VALUES ($1, $2, $3, $4, $5)',
+        [
+          'Freies Training',
+          'Übe mit 110 verschiedenen jugendgerechten Sätzen - bei jedem Start wird ein zufälliger Text ausgewählt!',
+          0,
+          homePracticeTexts.join('|'),
+          'alle'
+        ]
+      );
+      console.log('✓ Migration: Lektion 0 (Freies Training) hinzugefügt');
+    }
   } catch (error) {
     console.error('Fehler bei Migrationen:', error);
   }
