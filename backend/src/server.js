@@ -20,11 +20,13 @@ const authRoutes = require('./routes/auth');
 const lessonsRoutes = require('./routes/lessons');
 const progressRoutes = require('./routes/progress');
 const classesRoutes = require('./routes/classes');
+const practiceRoutes = require('./routes/practice');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/lessons', lessonsRoutes);
 app.use('/api/progress', progressRoutes);
 app.use('/api/classes', classesRoutes);
+app.use('/api/practice', practiceRoutes);
 
 // Swagger API Dokumentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {

@@ -143,7 +143,16 @@ const initDatabase = async () => {
 };
 
 const insertDefaultLessons = async () => {
+  const homePracticeTexts = require('./homePracticeTexts');
+
   const lessons = [
+    {
+      title: 'Freies Training',
+      description: 'Übe mit 110 verschiedenen jugendgerechten Sätzen - bei jedem Start wird ein zufälliger Text ausgewählt!',
+      level: 0,
+      text_content: homePracticeTexts.join('|'), // Alle Texte mit | getrennt
+      target_keys: 'alle'
+    },
     {
       title: 'Grundreihe - ASDF JKL',
       description: 'Lerne die Grundposition deiner Finger auf der Tastatur',

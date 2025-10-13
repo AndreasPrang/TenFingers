@@ -37,6 +37,13 @@ const Practice: React.FC = () => {
     loadLesson();
   }, [id]);
 
+  // Auto-start nach dem Laden der Lektion
+  useEffect(() => {
+    if (lesson && !started && !finished) {
+      handleStart();
+    }
+  }, [lesson]);
+
   useEffect(() => {
     if (started && !finished && inputRef.current) {
       inputRef.current.focus();
@@ -117,8 +124,18 @@ const Practice: React.FC = () => {
   const handleStart = () => {
     if (!lesson) return;
 
-    // Generiere neuen zufälligen Text
-    const newText = generatePracticeText(lesson.target_keys);
+    let newText: string;
+
+    // Level 0 (Freies Training): Wähle einen zufälligen Text aus dem text_content
+    if (lesson.level === 0 && lesson.text_content.includes('|')) {
+      const texts = lesson.text_content.split('|');
+      const randomIndex = Math.floor(Math.random() * texts.length);
+      newText = texts[randomIndex];
+    } else {
+      // Andere Lektionen: Generiere zufälligen Text oder nutze lesson.text_content
+      newText = lesson.text_content || generatePracticeText(lesson.target_keys);
+    }
+
     setPracticeText(newText);
 
     setStarted(true);
@@ -295,16 +312,6 @@ const Practice: React.FC = () => {
           <p>{lesson.description}</p>
         </div>
       </header>
-
-      {!started && (
-        <div className="practice-start">
-          <h2>Bereit zum Üben?</h2>
-          <p>Tippe den angezeigten Text so genau und schnell wie möglich.</p>
-          <button className="btn-start-practice" onClick={handleStart}>
-            Übung starten
-          </button>
-        </div>
-      )}
 
       {started && (
         <>
