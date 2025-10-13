@@ -297,6 +297,20 @@
   margin-bottom: 30px;
 }
 
+.guest-info-message {
+  background: linear-gradient(135deg, #2196F3, #1976D2);
+  color: white;
+  padding: 20px;
+  border-radius: 10px;
+  font-size: 16px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.guest-info-message strong {
+  font-weight: 700;
+}
+
 .result-actions {
   display: flex;
   gap: 20px;
@@ -306,7 +320,8 @@
 
 .btn-retry,
 .btn-next,
-.btn-next-lesson {
+.btn-next-lesson,
+.btn-register-prompt {
   padding: 14px 30px;
   border: none;
   border-radius: 10px;
@@ -353,9 +368,19 @@
   box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
 }
 
+.btn-register-prompt {
+  background: linear-gradient(135deg, #FF6B35, #F7931E);
+  color: white;
+  font-size: 17px;
+  font-weight: 700;
+  padding: 16px 40px;
+  box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
+}
+
 .btn-retry:hover,
 .btn-next:hover,
-.btn-next-lesson:hover {
+.btn-next-lesson:hover,
+.btn-register-prompt:hover {
   transform: translateY(-2px);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }

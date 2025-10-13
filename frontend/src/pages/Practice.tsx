@@ -2,12 +2,14 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { lessonsAPI, progressAPI } from '../services/api';
 import { Lesson, TypingStats } from '../types';
+import { useAuth } from '../context/AuthContext';
 import Keyboard from '../components/Keyboard';
 import '../styles/Practice.css';
 
 const Practice: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
 
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [allLessons, setAllLessons] = useState<Lesson[]>([]);
@@ -215,18 +217,21 @@ const Practice: React.FC = () => {
   const finishPractice = async (finalStats: TypingStats) => {
     setFinished(true);
 
-    // Bestimme ob die Lektion als abgeschlossen gilt (z.B. >80% Genauigkeit)
-    const completed = finalStats.accuracy >= 80;
+    // Speichere Fortschritt nur wenn Benutzer eingeloggt ist
+    if (isAuthenticated) {
+      // Bestimme ob die Lektion als abgeschlossen gilt (z.B. >80% Genauigkeit)
+      const completed = finalStats.accuracy >= 80;
 
-    try {
-      await progressAPI.saveProgress(
-        Number(id),
-        finalStats.wpm,
-        finalStats.accuracy,
-        completed
-      );
-    } catch (err) {
-      console.error('Fehler beim Speichern des Fortschritts:', err);
+      try {
+        await progressAPI.saveProgress(
+          Number(id),
+          finalStats.wpm,
+          finalStats.accuracy,
+          completed
+        );
+      } catch (err) {
+        console.error('Fehler beim Speichern des Fortschritts:', err);
+      }
     }
   };
 
@@ -366,9 +371,16 @@ const Practice: React.FC = () => {
               </div>
             </div>
 
+            {!isAuthenticated && (
+              <div className="guest-info-message">
+                💡 <strong>Tipp:</strong> Registriere dich kostenlos, um deinen Fortschritt zu speichern und zu verfolgen!
+              </div>
+            )}
+
             {stats.accuracy >= 80 ? (
               <div className="success-message">
                 Großartig! Du hast diese Lektion erfolgreich abgeschlossen!
+                {!isAuthenticated && ' (Als Gast - Fortschritt nicht gespeichert)'}
               </div>
             ) : (
               <div className="try-again-message">
@@ -377,6 +389,11 @@ const Practice: React.FC = () => {
             )}
 
             <div className="result-actions">
+              {!isAuthenticated && (
+                <button className="btn-register-prompt" onClick={() => navigate('/register')}>
+                  Jetzt registrieren
+                </button>
+              )}
               <button className="btn-retry" onClick={handleStart}>
                 Nochmal versuchen
               </button>

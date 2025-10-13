@@ -20,6 +20,11 @@ const Navbar: React.FC = () => {
         </Link>
 
         <div className="navbar-menu">
+          {/* Lektionen-Link für alle (Gäste und eingeloggte Benutzer) */}
+          <Link to="/lessons" className="navbar-link">
+            Lektionen
+          </Link>
+
           {isAuthenticated ? (
             <>
               {user?.role === 'teacher' ? (
@@ -32,9 +37,6 @@ const Navbar: React.FC = () => {
                 <>
                   <Link to="/dashboard" className="navbar-link">
                     Dashboard
-                  </Link>
-                  <Link to="/lessons" className="navbar-link">
-                    Lektionen
                   </Link>
                 </>
               )}
