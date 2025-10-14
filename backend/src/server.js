@@ -44,9 +44,13 @@ app.get('/api-docs.json', (req, res) => {
 
 // Version Endpoint
 app.get('/api/version', (req, res) => {
+  const packageVersion = require('../package.json').version;
+  const gitCommit = process.env.GIT_COMMIT || 'unknown';
+
   res.json({
-    version: process.env.GIT_COMMIT || 'unknown',
-    shortVersion: (process.env.GIT_COMMIT || 'unknown').substring(0, 7)
+    version: packageVersion,
+    gitCommit: gitCommit,
+    gitCommitShort: gitCommit.substring(0, 7)
   });
 });
 
@@ -62,7 +66,7 @@ app.get('/api/health', async (req, res) => {
       message: 'TenFingers API läuft',
       timestamp: new Date().toISOString(),
       database: 'connected',
-      version: (process.env.GIT_COMMIT || 'unknown').substring(0, 7)
+      version: require('../package.json').version
     });
   } catch (error) {
     res.status(503).json({

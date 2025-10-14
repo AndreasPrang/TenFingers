@@ -5,23 +5,29 @@ import '../styles/Footer.css';
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
   const [version, setVersion] = useState<string>('');
-  const [fullVersion, setFullVersion] = useState<string>('');
+  const [gitCommit, setGitCommit] = useState<string>('');
 
   useEffect(() => {
     // Version aus Build-Zeit (Frontend)
     const frontendVersion = process.env.REACT_APP_VERSION;
+    const frontendGitCommit = process.env.REACT_APP_GIT_COMMIT;
+
     if (frontendVersion) {
-      setVersion(frontendVersion.substring(0, 7));
-      setFullVersion(frontendVersion);
+      setVersion(frontendVersion);
+    }
+    if (frontendGitCommit) {
+      setGitCommit(frontendGitCommit);
     }
 
     // Hole auch Backend-Version
     fetch('/api/version')
       .then(res => res.json())
       .then(data => {
-        if (data.shortVersion && data.shortVersion !== 'unknown') {
-          setVersion(data.shortVersion);
-          setFullVersion(data.version);
+        if (data.version) {
+          setVersion(data.version);
+        }
+        if (data.gitCommit && data.gitCommit !== 'unknown') {
+          setGitCommit(data.gitCommit);
         }
       })
       .catch(() => {
@@ -78,7 +84,7 @@ const Footer: React.FC = () => {
           {version && (
             <span
               className="version-info"
-              title={`Git Commit: ${fullVersion}`}
+              title={gitCommit ? `Git Commit: ${gitCommit}` : undefined}
             >
               {' '}v{version}
             </span>

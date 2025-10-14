@@ -14,9 +14,13 @@ COPY . .
 
 # Build-Argumente für API URL und Version
 ARG REACT_APP_API_URL=/api
-ARG REACT_APP_VERSION=unknown
+ARG REACT_APP_GIT_COMMIT=unknown
 ENV REACT_APP_API_URL=$REACT_APP_API_URL
-ENV REACT_APP_VERSION=$REACT_APP_VERSION
+ENV REACT_APP_GIT_COMMIT=$REACT_APP_GIT_COMMIT
+
+# Lese Version aus package.json
+RUN PACKAGE_VERSION=$(node -p "require('./package.json').version") && \
+    echo "REACT_APP_VERSION=$PACKAGE_VERSION" >> .env.production.local
 
 # Build für Production
 RUN npm run build
