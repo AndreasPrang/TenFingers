@@ -106,6 +106,11 @@ FRONTEND_URL=https://deine-domain.de
 
 # React App (API URL)
 REACT_APP_API_URL=https://deine-domain.de/api
+
+# Mail-Server (Postfix)
+MAIL_HOST=mailserver
+MAIL_PORT=25
+MAIL_FROM=noreply@deine-domain.de
 ```
 
 **Sichere Passwörter generieren:**
@@ -200,7 +205,52 @@ Du solltest sehen:
 
 ---
 
-## Schritt 9: Ersten Lehrer-Account erstellen
+## Schritt 9: Mail-Server konfigurieren (DNS & SPF)
+
+TenFingers enthält einen integrierten Postfix Mail-Relay für Passwort-Reset-E-Mails.
+
+### DNS-Einstellungen
+
+Für zuverlässigen E-Mail-Versand solltest du folgende DNS-Einträge konfigurieren:
+
+**1. Reverse DNS (PTR Record)**
+- Bei deinem VPS-Provider/Hoster einrichten
+- `VPS-IP` → `deine-domain.de`
+- Beispiel: `89.58.13.117` → `tenfingers.pra.ng`
+
+**2. SPF-Record (TXT Record)**
+- Bei deinem DNS-Provider einrichten
+- Typ: `TXT`
+- Name: `@` oder `deine-domain.de`
+- Wert: `v=spf1 ip4:DEINE-VPS-IP -all`
+- Beispiel: `v=spf1 ip4:89.58.13.117 -all`
+
+**3. (Optional) DKIM und DMARC**
+- Für erweiterte E-Mail-Authentifizierung
+- Erhöht die Zustellbarkeit
+
+### Mail-Server testen
+
+```bash
+# Mail-Server Logs überprüfen
+docker-compose -f docker-compose.prod.yml logs mailserver
+
+# Test-E-Mail über API senden
+curl -X POST https://deine-domain.de/api/mail/test \
+  -H "Content-Type: application/json" \
+  -d '{"to":"deine-email@example.com","subject":"Test","text":"Test-Mail"}'
+```
+
+### Hinweise
+
+- Der Mailserver läuft als Docker-Container und ist nur intern erreichbar
+- E-Mails werden von `MAIL_FROM` (noreply@deine-domain.de) versendet
+- Passwort-Reset-E-Mails werden automatisch versendet
+- Für Accounts ohne E-Mail-Adresse werden keine Reset-E-Mails versendet
+
+---
+
+## Schritt 10: Ersten Lehrer-Account erstellen
 
 Du kannst dich jetzt auf `https://deine-domain.de` registrieren und beim ersten Account "Lehrer" als Rolle auswählen.
 
@@ -233,6 +283,9 @@ docker-compose -f docker-compose.prod.yml logs -f nginx
 
 # Nur Certbot
 docker-compose -f docker-compose.prod.yml logs -f certbot
+
+# Nur Mailserver
+docker-compose -f docker-compose.prod.yml logs -f mailserver
 ```
 
 ### Container neustarten
@@ -431,6 +484,39 @@ docker-compose -f docker-compose.prod.yml exec nginx nginx -t
 # Nginx-Container neu bauen
 docker-compose -f docker-compose.prod.yml up -d --build nginx
 ```
+
+### E-Mail-Versand funktioniert nicht
+
+```bash
+# Mailserver-Logs überprüfen
+docker-compose -f docker-compose.prod.yml logs mailserver
+
+# Backend-Logs für E-Mail-Fehler überprüfen
+docker-compose -f docker-compose.prod.yml logs backend | grep -i mail
+
+# DNS-Einstellungen überprüfen
+dig +short deine-domain.de TXT  # SPF-Record prüfen
+host DEINE-VPS-IP              # Reverse DNS prüfen
+
+# Mailserver-Konfiguration testen
+docker exec tenfingers-mailserver postconf mynetworks
+docker exec tenfingers-mailserver postconf myhostname
+
+# Test-E-Mail senden
+curl -X POST http://localhost:4000/api/mail/test \
+  -H "Content-Type: application/json" \
+  -d '{"to":"deine-email@example.com","subject":"Test","text":"Test-Nachricht"}'
+
+# Mailserver neu starten
+docker-compose -f docker-compose.prod.yml restart mailserver
+```
+
+**Häufige Ursachen:**
+- Fehlende oder falsche DNS-Einträge (SPF, Reverse DNS)
+- E-Mails landen im Spam (SPF/DKIM nicht konfiguriert)
+- Port 25 vom Provider blockiert (manche Provider blocken ausgehenden SMTP)
+- Falsche MAIL_FROM Adresse in .env.production
+- Account hat keine E-Mail-Adresse hinterlegt
 
 ---
 
