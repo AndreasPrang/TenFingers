@@ -26,7 +26,8 @@ const Home: React.FC = () => {
       }
     } catch (error) {
       console.error('Fehler beim Laden des Textes:', error);
-      setPracticeText('Fehler beim Laden. Bitte neu laden.');
+      // Fallback zu einem Standard-Text statt Fehlermeldung anzuzeigen
+      setPracticeText('das schnelle braune pferd springt ueber den faulen hund');
     }
   };
 
