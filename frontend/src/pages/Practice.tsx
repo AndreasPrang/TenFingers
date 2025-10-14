@@ -252,21 +252,20 @@ const Practice: React.FC = () => {
   const finishPractice = async (finalStats: TypingStats) => {
     setFinished(true);
 
-    // Speichere Fortschritt nur wenn Benutzer eingeloggt ist
-    if (isAuthenticated) {
-      // Bestimme ob die Lektion als abgeschlossen gilt (z.B. >80% Genauigkeit)
-      const completed = finalStats.accuracy >= 80;
+    // Bestimme ob die Lektion als abgeschlossen gilt (z.B. >80% Genauigkeit)
+    const completed = finalStats.accuracy >= 80;
 
-      try {
-        await progressAPI.saveProgress(
-          Number(id),
-          finalStats.wpm,
-          finalStats.accuracy,
-          completed
-        );
-      } catch (err) {
-        console.error('Fehler beim Speichern des Fortschritts:', err);
-      }
+    try {
+      // Speichere Fortschritt für alle (eingeloggte und anonyme Nutzer)
+      await progressAPI.saveProgress(
+        Number(id),
+        finalStats.wpm,
+        finalStats.accuracy,
+        completed,
+        !isAuthenticated // is_anonymous = true wenn nicht eingeloggt
+      );
+    } catch (err) {
+      console.error('Fehler beim Speichern des Fortschritts:', err);
     }
   };
 

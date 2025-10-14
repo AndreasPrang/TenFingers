@@ -84,13 +84,15 @@ export const progressAPI = {
     lesson_id: number,
     wpm: number,
     accuracy: number,
-    completed: boolean
+    completed: boolean,
+    is_anonymous: boolean = false
   ): Promise<Progress> => {
     const response = await api.post('/progress', {
       lesson_id,
       wpm,
       accuracy,
       completed,
+      is_anonymous,
     });
     return response.data;
   },
@@ -207,6 +209,11 @@ export const adminAPI = {
 
   getPopularLessons: async (): Promise<any> => {
     const response = await api.get('/admin/popular-lessons');
+    return response.data;
+  },
+
+  getAnonymousVsRegisteredComparison: async (): Promise<any> => {
+    const response = await api.get('/admin/anonymous-vs-registered');
     return response.data;
   },
 };

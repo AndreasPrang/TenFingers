@@ -63,11 +63,12 @@ const options = {
           type: 'object',
           properties: {
             id: { type: 'integer' },
-            user_id: { type: 'integer' },
+            user_id: { type: 'integer', nullable: true },
             lesson_id: { type: 'integer' },
             wpm: { type: 'number', format: 'float', example: 42.5 },
             accuracy: { type: 'number', format: 'float', example: 96.8 },
             completed: { type: 'boolean', example: true },
+            is_anonymous: { type: 'boolean', example: false },
             completed_at: { type: 'string', format: 'date-time', nullable: true },
             created_at: { type: 'string', format: 'date-time' },
           },

@@ -63,6 +63,7 @@ const AdminDashboard: React.FC = () => {
   const [activeUsersData, setActiveUsersData] = useState<any[]>([]);
   const [performanceDistribution, setPerformanceDistribution] = useState<any>(null);
   const [popularLessons, setPopularLessons] = useState<any[]>([]);
+  const [comparisonData, setComparisonData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [timeRange, setTimeRange] = useState(30);
@@ -76,21 +77,23 @@ const AdminDashboard: React.FC = () => {
       setLoading(true);
       setError('');
 
-      // Lade alle Daten parallel
+      // Lade alle Daten parallel (inkl. anonyme + registrierte Nutzer)
       const [
         dashboardStats,
         registrations,
         practiceSessions,
         activeUsers,
         perfDist,
-        lessons
+        lessons,
+        comparison
       ] = await Promise.all([
         adminAPI.getDashboardStats(),
         adminAPI.getTimeSeriesData('registrations', timeRange),
         adminAPI.getTimeSeriesData('practice_sessions', timeRange),
         adminAPI.getTimeSeriesData('active_users', timeRange),
         adminAPI.getPerformanceDistribution(),
-        adminAPI.getPopularLessons()
+        adminAPI.getPopularLessons(),
+        adminAPI.getAnonymousVsRegisteredComparison()
       ]);
 
       setStats(dashboardStats);
@@ -99,6 +102,7 @@ const AdminDashboard: React.FC = () => {
       setActiveUsersData(activeUsers.data);
       setPerformanceDistribution(perfDist);
       setPopularLessons(lessons.lessons);
+      setComparisonData(comparison);
     } catch (err: any) {
       console.error('Fehler beim Laden der Dashboard-Daten:', err);
       setError(err.response?.data?.error || 'Fehler beim Laden der Dashboard-Daten');
@@ -413,6 +417,121 @@ const AdminDashboard: React.FC = () => {
               </tbody>
             </table>
           </div>
+        </section>
+      )}
+
+      {/* Vergleich: Anonyme vs Registrierte Nutzer */}
+      {comparisonData && (
+        <section className="comparison-section">
+          <h2>Vergleich: Anonyme vs Registrierte Nutzer</h2>
+
+          {/* Übersichtskarten Vergleich */}
+          <div className="stats-overview">
+            <div className="stat-card">
+              <div className="stat-icon">👤</div>
+              <div className="stat-content">
+                <h3>{comparisonData.sessionStats.anonymousSessions}</h3>
+                <p>Anonyme Sessions</p>
+                <small>{comparisonData.sessionStats.anonymousCompleted} abgeschlossen</small>
+              </div>
+            </div>
+
+            <div className="stat-card">
+              <div className="stat-icon">👥</div>
+              <div className="stat-content">
+                <h3>{comparisonData.sessionStats.registeredSessions}</h3>
+                <p>Registrierte Sessions</p>
+                <small>{comparisonData.sessionStats.registeredCompleted} abgeschlossen</small>
+              </div>
+            </div>
+
+            <div className="stat-card">
+              <div className="stat-icon">⚡</div>
+              <div className="stat-content">
+                <h3>{comparisonData.sessionStats.anonymousAvgWpm.toFixed(1)}</h3>
+                <p>Ø WPM (Anonym)</p>
+              </div>
+            </div>
+
+            <div className="stat-card">
+              <div className="stat-icon">⚡</div>
+              <div className="stat-content">
+                <h3>{comparisonData.sessionStats.registeredAvgWpm.toFixed(1)}</h3>
+                <p>Ø WPM (Registriert)</p>
+              </div>
+            </div>
+
+            <div className="stat-card">
+              <div className="stat-icon">🎯</div>
+              <div className="stat-content">
+                <h3>{comparisonData.sessionStats.anonymousAvgAccuracy.toFixed(1)}%</h3>
+                <p>Ø Genauigkeit (Anonym)</p>
+              </div>
+            </div>
+
+            <div className="stat-card">
+              <div className="stat-icon">🎯</div>
+              <div className="stat-content">
+                <h3>{comparisonData.sessionStats.registeredAvgAccuracy.toFixed(1)}%</h3>
+                <p>Ø Genauigkeit (Registriert)</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Graph: Anonyme vs Registrierte Sessions über Zeit */}
+          <div className="charts-grid">
+            <div className="chart-card" style={{ gridColumn: '1 / -1' }}>
+              <h3>Sessions-Vergleich über Zeit (30 Tage)</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={comparisonData.timeSeriesComparison}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis
+                    dataKey="date"
+                    tickFormatter={formatDate}
+                    angle={-45}
+                    textAnchor="end"
+                    height={80}
+                  />
+                  <YAxis />
+                  <Tooltip labelFormatter={formatDate} />
+                  <Legend />
+                  <Line type="monotone" dataKey="anonymousSessions" stroke="#f59e0b" name="Anonyme Sessions" />
+                  <Line type="monotone" dataKey="registeredSessions" stroke="#6366f1" name="Registrierte Sessions" />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Tabelle: Lektionen nach Nutzertyp */}
+          {comparisonData.topLessonsByType.length > 0 && (
+            <div className="lessons-table">
+              <h3>Top-Lektionen nach Nutzertyp</h3>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Lektion</th>
+                    <th>Level</th>
+                    <th>Anonyme Versuche</th>
+                    <th>Registrierte Versuche</th>
+                    <th>Ø WPM (Anonym)</th>
+                    <th>Ø WPM (Registriert)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {comparisonData.topLessonsByType.map((lesson: any) => (
+                    <tr key={lesson.id}>
+                      <td>{lesson.title}</td>
+                      <td>{lesson.level}</td>
+                      <td>{lesson.anonymousAttempts}</td>
+                      <td>{lesson.registeredAttempts}</td>
+                      <td>{lesson.anonymousAvgWpm > 0 ? lesson.anonymousAvgWpm.toFixed(1) : '-'}</td>
+                      <td>{lesson.registeredAvgWpm > 0 ? lesson.registeredAvgWpm.toFixed(1) : '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </section>
       )}
     </div>

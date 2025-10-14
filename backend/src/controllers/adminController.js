@@ -12,9 +12,11 @@ const requireAdmin = (req, res, next) => {
 
 /**
  * Dashboard-Übersicht mit wichtigsten Kennzahlen
+ * Zeigt immer alle Daten (anonyme + registrierte Nutzer kombiniert)
  */
 const getDashboardStats = async (req, res) => {
   try {
+
     // Gesamtanzahl User nach Rollen
     const userStats = await pool.query(`
       SELECT
@@ -31,16 +33,16 @@ const getDashboardStats = async (req, res) => {
       FROM classes
     `);
 
-    // Gesamtanzahl Lektionen und Durchschnittswerte
+    // Gesamtanzahl Lektionen und Durchschnittswerte (alle Sessions)
     const lessonStats = await pool.query(`
       SELECT
         COUNT(*) as total_lessons_available,
-        COUNT(DISTINCT lesson_id) as unique_lessons_practiced
+        COUNT(DISTINCT p.lesson_id) as unique_lessons_practiced
       FROM lessons
-      LEFT JOIN progress ON lessons.id = progress.lesson_id
+      LEFT JOIN progress p ON lessons.id = p.lesson_id
     `);
 
-    // Progress-Statistiken
+    // Progress-Statistiken (alle Sessions: anonym + registriert)
     const progressStats = await pool.query(`
       SELECT
         COUNT(*) as total_practice_sessions,
@@ -50,7 +52,7 @@ const getDashboardStats = async (req, res) => {
       FROM progress
     `);
 
-    // Aktivitätsstatistiken (letzten 7 Tage)
+    // Aktivitätsstatistiken (letzten 7 Tage, alle Sessions)
     const recentActivity = await pool.query(`
       SELECT
         COUNT(DISTINCT user_id) as active_users_7d,
@@ -59,7 +61,7 @@ const getDashboardStats = async (req, res) => {
       WHERE created_at >= NOW() - INTERVAL '7 days'
     `);
 
-    // Aktivitätsstatistiken (letzten 30 Tage)
+    // Aktivitätsstatistiken (letzten 30 Tage, alle Sessions)
     const monthlyActivity = await pool.query(`
       SELECT
         COUNT(DISTINCT user_id) as active_users_30d,
@@ -111,7 +113,7 @@ const getDashboardStats = async (req, res) => {
 
 /**
  * Zeitverlauf-Daten für Graphen
- * Liefert tägliche Statistiken für die letzten 30 Tage
+ * Liefert tägliche Statistiken (alle Sessions: anonym + registriert)
  */
 const getTimeSeriesData = async (req, res) => {
   try {
@@ -209,12 +211,19 @@ const getTimeSeriesData = async (req, res) => {
 
 /**
  * Leistungsverteilungen (anonymisiert)
- * Zeigt Verteilung von WPM und Accuracy über alle User
+ * Zeigt Verteilung von WPM und Accuracy über alle Sessions (anonym + registriert)
  */
 const getPerformanceDistribution = async (req, res) => {
   try {
-    // WPM-Verteilung in 10er-Schritten
+    // WPM-Verteilung basierend auf allen Sessions
     const wpmDistribution = await pool.query(`
+      WITH user_averages AS (
+        SELECT
+          COALESCE(user_id, id) as user_identifier,
+          AVG(wpm) as average_wpm
+        FROM progress
+        GROUP BY COALESCE(user_id, id)
+      )
       SELECT
         CASE
           WHEN average_wpm < 10 THEN '0-10'
@@ -228,14 +237,21 @@ const getPerformanceDistribution = async (req, res) => {
           ELSE '80+'
         END as wpm_range,
         COUNT(*) as count
-      FROM user_stats
+      FROM user_averages
       WHERE average_wpm > 0
       GROUP BY wpm_range
       ORDER BY wpm_range
     `);
 
-    // Accuracy-Verteilung in 10%-Schritten
+    // Accuracy-Verteilung basierend auf allen Sessions
     const accuracyDistribution = await pool.query(`
+      WITH user_averages AS (
+        SELECT
+          COALESCE(user_id, id) as user_identifier,
+          AVG(accuracy) as average_accuracy
+        FROM progress
+        GROUP BY COALESCE(user_id, id)
+      )
       SELECT
         CASE
           WHEN average_accuracy < 60 THEN '0-60%'
@@ -245,14 +261,21 @@ const getPerformanceDistribution = async (req, res) => {
           ELSE '90-100%'
         END as accuracy_range,
         COUNT(*) as count
-      FROM user_stats
+      FROM user_averages
       WHERE average_accuracy > 0
       GROUP BY accuracy_range
       ORDER BY accuracy_range
     `);
 
-    // Lektionen-Fortschritt-Verteilung
+    // Lektionen-Fortschritt-Verteilung basierend auf allen Sessions
     const lessonsDistribution = await pool.query(`
+      WITH user_lesson_counts AS (
+        SELECT
+          COALESCE(user_id, id) as user_identifier,
+          COUNT(DISTINCT lesson_id) FILTER (WHERE completed = true) as total_lessons_completed
+        FROM progress
+        GROUP BY COALESCE(user_id, id)
+      )
       SELECT
         CASE
           WHEN total_lessons_completed = 0 THEN '0'
@@ -262,7 +285,7 @@ const getPerformanceDistribution = async (req, res) => {
           ELSE '10+'
         END as lessons_range,
         COUNT(*) as count
-      FROM user_stats
+      FROM user_lesson_counts
       GROUP BY lessons_range
       ORDER BY lessons_range
     `);
@@ -280,6 +303,7 @@ const getPerformanceDistribution = async (req, res) => {
 
 /**
  * Beliebteste Lektionen (anonymisiert)
+ * Zeigt alle Sessions (anonym + registriert)
  */
 const getPopularLessons = async (req, res) => {
   try {
@@ -318,10 +342,92 @@ const getPopularLessons = async (req, res) => {
   }
 };
 
+/**
+ * Vergleich zwischen anonymen und registrierten Nutzern
+ */
+const getAnonymousVsRegisteredComparison = async (req, res) => {
+  try {
+    // Gesamtstatistiken aufgeteilt nach Nutzertyp
+    const sessionStats = await pool.query(`
+      SELECT
+        COUNT(*) FILTER (WHERE is_anonymous = true) as anonymous_sessions,
+        COUNT(*) FILTER (WHERE is_anonymous = false) as registered_sessions,
+        COUNT(*) FILTER (WHERE is_anonymous = true AND completed = true) as anonymous_completed,
+        COUNT(*) FILTER (WHERE is_anonymous = false AND completed = true) as registered_completed,
+        ROUND(AVG(wpm) FILTER (WHERE is_anonymous = true), 2) as anonymous_avg_wpm,
+        ROUND(AVG(wpm) FILTER (WHERE is_anonymous = false), 2) as registered_avg_wpm,
+        ROUND(AVG(accuracy) FILTER (WHERE is_anonymous = true), 2) as anonymous_avg_accuracy,
+        ROUND(AVG(accuracy) FILTER (WHERE is_anonymous = false), 2) as registered_avg_accuracy
+      FROM progress
+    `);
+
+    // Zeitverlauf: Anonyme vs Registrierte Sessions (letzten 30 Tage)
+    const timeSeriesComparison = await pool.query(`
+      SELECT
+        DATE(created_at) as date,
+        COUNT(*) FILTER (WHERE is_anonymous = true) as anonymous_sessions,
+        COUNT(*) FILTER (WHERE is_anonymous = false) as registered_sessions
+      FROM progress
+      WHERE created_at >= NOW() - INTERVAL '30 days'
+      GROUP BY DATE(created_at)
+      ORDER BY date ASC
+    `);
+
+    // Top-Lektionen nach Nutzertyp
+    const topLessonsByType = await pool.query(`
+      SELECT
+        l.id,
+        l.title,
+        l.level,
+        COUNT(*) FILTER (WHERE p.is_anonymous = true) as anonymous_attempts,
+        COUNT(*) FILTER (WHERE p.is_anonymous = false) as registered_attempts,
+        ROUND(AVG(p.wpm) FILTER (WHERE p.is_anonymous = true), 2) as anonymous_avg_wpm,
+        ROUND(AVG(p.wpm) FILTER (WHERE p.is_anonymous = false), 2) as registered_avg_wpm
+      FROM lessons l
+      LEFT JOIN progress p ON l.id = p.lesson_id
+      GROUP BY l.id, l.title, l.level
+      HAVING COUNT(*) > 0
+      ORDER BY (COUNT(*) FILTER (WHERE p.is_anonymous = true) + COUNT(*) FILTER (WHERE p.is_anonymous = false)) DESC
+      LIMIT 10
+    `);
+
+    res.json({
+      sessionStats: {
+        anonymousSessions: parseInt(sessionStats.rows[0].anonymous_sessions) || 0,
+        registeredSessions: parseInt(sessionStats.rows[0].registered_sessions) || 0,
+        anonymousCompleted: parseInt(sessionStats.rows[0].anonymous_completed) || 0,
+        registeredCompleted: parseInt(sessionStats.rows[0].registered_completed) || 0,
+        anonymousAvgWpm: parseFloat(sessionStats.rows[0].anonymous_avg_wpm) || 0,
+        registeredAvgWpm: parseFloat(sessionStats.rows[0].registered_avg_wpm) || 0,
+        anonymousAvgAccuracy: parseFloat(sessionStats.rows[0].anonymous_avg_accuracy) || 0,
+        registeredAvgAccuracy: parseFloat(sessionStats.rows[0].registered_avg_accuracy) || 0
+      },
+      timeSeriesComparison: timeSeriesComparison.rows.map(row => ({
+        date: row.date,
+        anonymousSessions: parseInt(row.anonymous_sessions),
+        registeredSessions: parseInt(row.registered_sessions)
+      })),
+      topLessonsByType: topLessonsByType.rows.map(row => ({
+        id: row.id,
+        title: row.title,
+        level: row.level,
+        anonymousAttempts: parseInt(row.anonymous_attempts) || 0,
+        registeredAttempts: parseInt(row.registered_attempts) || 0,
+        anonymousAvgWpm: parseFloat(row.anonymous_avg_wpm) || 0,
+        registeredAvgWpm: parseFloat(row.registered_avg_wpm) || 0
+      }))
+    });
+  } catch (error) {
+    console.error('Fehler beim Abrufen des Vergleichs:', error);
+    res.status(500).json({ error: 'Serverfehler beim Abrufen des Vergleichs' });
+  }
+};
+
 module.exports = {
   requireAdmin,
   getDashboardStats,
   getTimeSeriesData,
   getPerformanceDistribution,
-  getPopularLessons
+  getPopularLessons,
+  getAnonymousVsRegisteredComparison
 };

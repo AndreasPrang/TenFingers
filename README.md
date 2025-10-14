@@ -222,9 +222,18 @@ tenfingers/
 - `GET /api/lessons/:id` - Einzelne Lektion abrufen
 
 ### Fortschritt
-- `POST /api/progress` - Fortschritt speichern
-- `GET /api/progress` - Eigenen Fortschritt abrufen
-- `GET /api/progress/stats` - Statistiken abrufen
+- `POST /api/progress` - Fortschritt speichern (mit oder ohne Login)
+  ```json
+  {
+    "lesson_id": 1,
+    "wpm": 42.5,
+    "accuracy": 96.8,
+    "completed": true,
+    "is_anonymous": false
+  }
+  ```
+- `GET /api/progress` - Eigenen Fortschritt abrufen (nur mit Login)
+- `GET /api/progress/stats` - Statistiken abrufen (nur mit Login)
 
 ### Klassenverwaltung (Lehrer)
 - `POST /api/classes` - Neue Klasse erstellen

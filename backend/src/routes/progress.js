@@ -6,16 +6,18 @@ const {
   getLessonProgress,
   getUserStats
 } = require('../controllers/progressController');
-const { authenticateToken } = require('../middleware/auth');
+const { authenticateToken, optionalAuth } = require('../middleware/auth');
 
 /**
  * @swagger
  * /api/progress:
  *   post:
- *     summary: Fortschritt speichern
+ *     summary: Fortschritt speichern (mit oder ohne Login)
+ *     description: Speichert eine Übungssession. Kann sowohl von eingeloggten Nutzern als auch anonym verwendet werden.
  *     tags: [Progress]
  *     security:
  *       - bearerAuth: []
+ *       - {}
  *     requestBody:
  *       required: true
  *       content:
@@ -30,17 +32,27 @@ const { authenticateToken } = require('../middleware/auth');
  *               lesson_id:
  *                 type: integer
  *                 example: 1
+ *                 description: ID der absolvierten Lektion
  *               wpm:
  *                 type: number
  *                 format: float
  *                 example: 42.5
+ *                 description: Wörter pro Minute
  *               accuracy:
  *                 type: number
  *                 format: float
  *                 example: 96.8
+ *                 description: Genauigkeit in Prozent
  *               completed:
  *                 type: boolean
+ *                 default: false
  *                 example: true
+ *                 description: Ob die Lektion erfolgreich abgeschlossen wurde
+ *               is_anonymous:
+ *                 type: boolean
+ *                 default: false
+ *                 example: false
+ *                 description: True wenn Session ohne Login durchgeführt wurde
  *     responses:
  *       201:
  *         description: Fortschritt erfolgreich gespeichert
@@ -49,13 +61,14 @@ const { authenticateToken } = require('../middleware/auth');
  *             schema:
  *               $ref: '#/components/schemas/Progress'
  *       400:
- *         description: Validierungsfehler
+ *         description: Validierungsfehler (fehlende Parameter)
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/', authenticateToken, saveProgress);
+// POST kann mit oder ohne Auth (für anonyme Sessions)
+router.post('/', optionalAuth, saveProgress);
 
 /**
  * @swagger

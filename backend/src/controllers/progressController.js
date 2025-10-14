@@ -2,24 +2,29 @@ const { pool } = require('../config/database');
 
 const saveProgress = async (req, res) => {
   try {
-    const userId = req.user.userId;
-    const { lesson_id, wpm, accuracy, completed } = req.body;
+    const userId = req.user ? req.user.userId : null;
+    const { lesson_id, wpm, accuracy, completed, is_anonymous } = req.body;
+
+    console.log('📊 SaveProgress called:', { userId, lesson_id, wpm, accuracy, completed, is_anonymous, hasUser: !!req.user });
 
     // Validierung
     if (!lesson_id || wpm === undefined || accuracy === undefined) {
+      console.log('❌ Validation failed');
       return res.status(400).json({ error: 'Lektion-ID, WPM und Genauigkeit sind erforderlich' });
     }
 
     // Speichere Fortschritt
     const result = await pool.query(
-      `INSERT INTO progress (user_id, lesson_id, wpm, accuracy, completed, completed_at)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO progress (user_id, lesson_id, wpm, accuracy, completed, completed_at, is_anonymous)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING *`,
-      [userId, lesson_id, wpm, accuracy, completed || false, completed ? new Date() : null]
+      [userId, lesson_id, wpm, accuracy, completed || false, completed ? new Date() : null, is_anonymous || false]
     );
 
-    // Aktualisiere User-Statistiken
-    await updateUserStats(userId);
+    // Aktualisiere User-Statistiken nur für registrierte Nutzer
+    if (userId) {
+      await updateUserStats(userId);
+    }
 
     res.status(201).json(result.rows[0]);
   } catch (error) {

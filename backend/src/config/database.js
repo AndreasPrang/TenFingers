@@ -157,6 +157,36 @@ const runMigrations = async () => {
       console.log('✓ Migration: display_name zu users hinzugefügt');
     }
 
+    // Migration: Füge is_anonymous zu progress hinzu, falls nicht vorhanden
+    const checkIsAnonymous = await pool.query(`
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_name='progress' AND column_name='is_anonymous'
+    `);
+
+    if (checkIsAnonymous.rows.length === 0) {
+      await pool.query(`
+        ALTER TABLE progress
+        ADD COLUMN is_anonymous BOOLEAN DEFAULT FALSE
+      `);
+      console.log('✓ Migration: is_anonymous zu progress hinzugefügt');
+    }
+
+    // Migration: user_id in progress optional machen für anonyme Sessions
+    const checkUserIdConstraint = await pool.query(`
+      SELECT is_nullable
+      FROM information_schema.columns
+      WHERE table_name='progress' AND column_name='user_id'
+    `);
+
+    if (checkUserIdConstraint.rows.length > 0 && checkUserIdConstraint.rows[0].is_nullable === 'NO') {
+      await pool.query(`
+        ALTER TABLE progress
+        ALTER COLUMN user_id DROP NOT NULL
+      `);
+      console.log('✓ Migration: user_id in progress ist jetzt optional');
+    }
+
     // Migration: Synchronisiere Standard-Lektionen
     await syncDefaultLessons();
   } catch (error) {
@@ -245,6 +275,7 @@ const initDatabase = async () => {
         accuracy DECIMAL(5,2),
         completed BOOLEAN DEFAULT FALSE,
         completed_at TIMESTAMP,
+        is_anonymous BOOLEAN DEFAULT FALSE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);

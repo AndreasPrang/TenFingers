@@ -6,7 +6,8 @@ const {
   getDashboardStats,
   getTimeSeriesData,
   getPerformanceDistribution,
-  getPopularLessons
+  getPopularLessons,
+  getAnonymousVsRegisteredComparison
 } = require('../controllers/adminController');
 
 // Alle Admin-Routes benötigen Authentifizierung und Admin-Rechte
@@ -24,5 +25,8 @@ router.get('/performance-distribution', getPerformanceDistribution);
 
 // Beliebteste Lektionen
 router.get('/popular-lessons', getPopularLessons);
+
+// Vergleich: Anonyme vs Registrierte Nutzer
+router.get('/anonymous-vs-registered', getAnonymousVsRegisteredComparison);
 
 module.exports = router;

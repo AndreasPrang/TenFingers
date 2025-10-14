@@ -170,17 +170,25 @@
 
 /* Sektionen */
 .distribution-section,
-.popular-lessons-section {
+.popular-lessons-section,
+.comparison-section {
   margin-bottom: 3rem;
 }
 
 .distribution-section h2,
-.popular-lessons-section h2 {
+.popular-lessons-section h2,
+.comparison-section h2 {
   font-size: 1.875rem;
   color: #1f2937;
   margin-bottom: 1.5rem;
   padding-bottom: 0.75rem;
   border-bottom: 2px solid #e5e7eb;
+}
+
+.comparison-section h3 {
+  font-size: 1.25rem;
+  color: #1f2937;
+  margin: 2rem 0 1rem 0;
 }
 
 /* Tabelle */
