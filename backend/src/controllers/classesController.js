@@ -85,6 +85,31 @@ const getClassById = async (req, res) => {
   }
 };
 
+// Hilfsfunktion: Finde einen verfügbaren Benutzernamen
+const findAvailableUsername = async (baseUsername) => {
+  let username = baseUsername;
+  let counter = 1;
+
+  while (true) {
+    const check = await pool.query(
+      'SELECT * FROM users WHERE username = $1',
+      [username]
+    );
+
+    if (check.rows.length === 0) {
+      return username;
+    }
+
+    username = `${baseUsername}${counter}`;
+    counter++;
+
+    // Sicherheit: Maximal 999 Versuche
+    if (counter > 999) {
+      throw new Error('Konnte keinen verfügbaren Benutzernamen finden');
+    }
+  }
+};
+
 // Schüler zur Klasse hinzufügen
 const addStudentToClass = async (req, res) => {
   try {
@@ -107,15 +132,8 @@ const addStudentToClass = async (req, res) => {
       return res.status(403).json({ error: 'Klasse nicht gefunden oder keine Berechtigung' });
     }
 
-    // Prüfe ob Benutzername bereits existiert
-    const usernameCheck = await pool.query(
-      'SELECT * FROM users WHERE username = $1',
-      [username]
-    );
-
-    if (usernameCheck.rows.length > 0) {
-      return res.status(400).json({ error: 'Benutzername bereits vergeben' });
-    }
+    // Finde verfügbaren Benutzernamen (mit automatischer Nummerierung falls nötig)
+    const finalUsername = await findAvailableUsername(username);
 
     // Prüfe ob E-Mail bereits existiert (nur wenn E-Mail angegeben wurde)
     if (email) {
@@ -133,10 +151,10 @@ const addStudentToClass = async (req, res) => {
     const saltRounds = 10;
     const passwordHash = await bcrypt.hash(password, saltRounds);
 
-    // Erstelle Schüler-Account
+    // Erstelle Schüler-Account mit finalem Benutzernamen
     const result = await pool.query(
       'INSERT INTO users (username, email, password_hash, role, class_id) VALUES ($1, $2, $3, $4, $5) RETURNING id, username, email, role, class_id, created_at',
-      [username, email || null, passwordHash, 'student', id]
+      [finalUsername, email || null, passwordHash, 'student', id]
     );
 
     const student = result.rows[0];
@@ -148,7 +166,9 @@ const addStudentToClass = async (req, res) => {
     );
 
     res.status(201).json({
-      message: 'Schüler erfolgreich erstellt',
+      message: finalUsername !== username
+        ? `Schüler erfolgreich erstellt (Benutzername angepasst zu "${finalUsername}")`
+        : 'Schüler erfolgreich erstellt',
       student: {
         id: student.id,
         username: student.username,
@@ -292,16 +312,8 @@ const bulkCreateStudents = async (req, res) => {
           continue;
         }
 
-        // Prüfe ob Benutzername bereits existiert
-        const usernameCheck = await pool.query(
-          'SELECT * FROM users WHERE username = $1',
-          [trimmedName]
-        );
-
-        if (usernameCheck.rows.length > 0) {
-          errors.push({ name: trimmedName, error: 'Benutzername bereits vergeben' });
-          continue;
-        }
+        // Finde verfügbaren Benutzernamen (mit automatischer Nummerierung falls nötig)
+        const finalUsername = await findAvailableUsername(trimmedName);
 
         // Generiere Passwort
         const generatedPassword = generatePassword();
@@ -311,7 +323,7 @@ const bulkCreateStudents = async (req, res) => {
         // Erstelle Schüler-Account
         const result = await pool.query(
           'INSERT INTO users (username, password_hash, role, class_id) VALUES ($1, $2, $3, $4) RETURNING id, username, created_at',
-          [trimmedName, passwordHash, 'student', id]
+          [finalUsername, passwordHash, 'student', id]
         );
 
         const student = result.rows[0];
@@ -327,7 +339,8 @@ const bulkCreateStudents = async (req, res) => {
           id: student.id,
           username: student.username,
           password: generatedPassword,
-          createdAt: student.created_at
+          createdAt: student.created_at,
+          wasRenamed: finalUsername !== trimmedName
         });
       } catch (error) {
         console.error(`Fehler beim Erstellen von Schüler ${name}:`, error);
