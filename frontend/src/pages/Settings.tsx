@@ -5,8 +5,14 @@ import { useNavigate } from 'react-router-dom';
 import '../styles/Settings.css';
 
 const Settings: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const navigate = useNavigate();
+
+  // Profile state
+  const [displayName, setDisplayName] = useState(user?.display_name || '');
+  const [profileMessage, setProfileMessage] = useState('');
+  const [profileError, setProfileError] = useState('');
+  const [updatingProfile, setUpdatingProfile] = useState(false);
 
   // Password change state
   const [currentPassword, setCurrentPassword] = useState('');
@@ -19,6 +25,29 @@ const Settings: React.FC = () => {
   // Account deletion state
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  const handleProfileUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setProfileError('');
+    setProfileMessage('');
+
+    setUpdatingProfile(true);
+    try {
+      const response = await authAPI.updateProfile({ displayName: displayName || null });
+      setProfileMessage(response.message);
+
+      // Update user context
+      if (updateUser && response.user) {
+        updateUser(response.user);
+      }
+    } catch (error: any) {
+      setProfileError(
+        error.response?.data?.error || 'Fehler beim Aktualisieren des Profils'
+      );
+    } finally {
+      setUpdatingProfile(false);
+    }
+  };
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,6 +105,43 @@ const Settings: React.FC = () => {
       </header>
 
       <div className="settings-content">
+        {/* Profil bearbeiten */}
+        <section className="settings-section">
+          <h2>Profil bearbeiten</h2>
+          <p className="section-description">
+            Hinterlege deinen Namen, damit dein Lehrer dich persönlich ansprechen kann
+          </p>
+
+          <form onSubmit={handleProfileUpdate} className="profile-form">
+            {profileError && <div className="error-message">{profileError}</div>}
+            {profileMessage && <div className="success-message">{profileMessage}</div>}
+
+            <div className="form-group">
+              <label htmlFor="displayName">Anzeigename (optional)</label>
+              <input
+                type="text"
+                id="displayName"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                placeholder="z.B. Max Mustermann"
+                disabled={updatingProfile}
+                maxLength={100}
+              />
+              <small className="form-hint">
+                Dein Anzeigename wird deinem Lehrer angezeigt. Wenn du keinen angibst, wird dein Benutzername verwendet.
+              </small>
+            </div>
+
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={updatingProfile}
+            >
+              {updatingProfile ? 'Wird gespeichert...' : 'Profil aktualisieren'}
+            </button>
+          </form>
+        </section>
+
         {/* Passwort ändern */}
         <section className="settings-section">
           <h2>Passwort ändern</h2>

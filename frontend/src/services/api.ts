@@ -26,8 +26,8 @@ api.interceptors.request.use(
 
 // Auth API
 export const authAPI = {
-  register: async (username: string, email: string, password: string, role?: string): Promise<AuthResponse> => {
-    const response = await api.post('/auth/register', { username, email, password, role });
+  register: async (username: string, email: string, password: string, role?: string, displayName?: string): Promise<AuthResponse> => {
+    const response = await api.post('/auth/register', { username, email, password, role, displayName });
     return response.data;
   },
 
@@ -38,6 +38,11 @@ export const authAPI = {
 
   getProfile: async () => {
     const response = await api.get('/auth/profile');
+    return response.data;
+  },
+
+  updateProfile: async (data: { displayName?: string | null }): Promise<{ message: string; user: any }> => {
+    const response = await api.put('/auth/profile', data);
     return response.data;
   },
 

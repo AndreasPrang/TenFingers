@@ -4,6 +4,7 @@ const {
   register,
   login,
   getProfile,
+  updateProfile,
   deleteAccount,
   changePassword,
   requestPasswordReset,
@@ -38,6 +39,10 @@ const { authenticateToken } = require('../middleware/auth');
  *               password:
  *                 type: string
  *                 example: sicheres-passwort
+ *               displayName:
+ *                 type: string
+ *                 example: Max Mustermann
+ *                 description: Optional - Anzeigename für persönliche Ansprache
  *               role:
  *                 type: string
  *                 enum: [student, teacher]
@@ -136,6 +141,49 @@ router.post('/login', login);
  *               $ref: '#/components/schemas/Error'
  */
 router.get('/profile', authenticateToken, getProfile);
+
+/**
+ * @swagger
+ * /api/auth/profile:
+ *   put:
+ *     summary: Profil aktualisieren
+ *     description: Aktualisiert das Profil des angemeldeten Benutzers (z.B. Display Name)
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               displayName:
+ *                 type: string
+ *                 example: Max Mustermann
+ *                 description: Anzeigename für persönliche Ansprache
+ *     responses:
+ *       200:
+ *         description: Profil erfolgreich aktualisiert
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 user:
+ *                   allOf:
+ *                     - $ref: '#/components/schemas/User'
+ *                     - $ref: '#/components/schemas/UserStats'
+ *       401:
+ *         description: Nicht authentifiziert
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.put('/profile', authenticateToken, updateProfile);
 
 /**
  * @swagger

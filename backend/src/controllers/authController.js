@@ -6,7 +6,7 @@ const { sendPasswordReset } = require('../services/mailService');
 
 const register = async (req, res) => {
   try {
-    const { username, email, password, role } = req.body;
+    const { username, email, password, role, displayName } = req.body;
 
     // Validiere Role
     const userRole = role === 'teacher' ? 'teacher' : 'student';
@@ -50,10 +50,13 @@ const register = async (req, res) => {
     // E-Mail auf null setzen wenn leer
     const userEmail = (email && email.trim() !== '') ? email : null;
 
+    // Display Name auf null setzen wenn leer
+    const userDisplayName = (displayName && displayName.trim() !== '') ? displayName.trim() : null;
+
     // Benutzer erstellen
     const result = await pool.query(
-      'INSERT INTO users (username, email, password_hash, role) VALUES ($1, $2, $3, $4) RETURNING id, username, email, role, created_at',
-      [username, userEmail, passwordHash, userRole]
+      'INSERT INTO users (username, email, password_hash, role, display_name) VALUES ($1, $2, $3, $4, $5) RETURNING id, username, email, role, display_name, created_at',
+      [username, userEmail, passwordHash, userRole, userDisplayName]
     );
 
     const user = result.rows[0];
@@ -78,6 +81,7 @@ const register = async (req, res) => {
         username: user.username,
         email: user.email,
         role: user.role,
+        displayName: user.display_name,
         class_id: null,
         createdAt: user.created_at
       },
@@ -131,6 +135,7 @@ const login = async (req, res) => {
         username: user.username,
         email: user.email,
         role: user.role,
+        displayName: user.display_name,
         class_id: user.class_id
       },
       token
@@ -146,7 +151,7 @@ const getProfile = async (req, res) => {
     const userId = req.user.userId;
 
     const result = await pool.query(
-      `SELECT u.id, u.username, u.email, u.role, u.class_id, u.created_at,
+      `SELECT u.id, u.username, u.email, u.role, u.display_name, u.class_id, u.created_at,
               s.total_lessons_completed, s.average_wpm, s.average_accuracy, s.total_practice_time
        FROM users u
        LEFT JOIN user_stats s ON u.id = s.user_id
@@ -198,6 +203,40 @@ const deleteAccount = async (req, res) => {
   } catch (error) {
     console.error('Fehler beim Löschen des Accounts:', error);
     res.status(500).json({ error: 'Serverfehler beim Löschen des Accounts' });
+  }
+};
+
+const updateProfile = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { displayName } = req.body;
+
+    // Display Name auf null setzen wenn leer
+    const userDisplayName = (displayName && displayName.trim() !== '') ? displayName.trim() : null;
+
+    // Update Profil
+    await pool.query(
+      'UPDATE users SET display_name = $1 WHERE id = $2',
+      [userDisplayName, userId]
+    );
+
+    // Hole aktualisiertes Profil
+    const result = await pool.query(
+      `SELECT u.id, u.username, u.email, u.role, u.display_name, u.class_id, u.created_at,
+              s.total_lessons_completed, s.average_wpm, s.average_accuracy, s.total_practice_time
+       FROM users u
+       LEFT JOIN user_stats s ON u.id = s.user_id
+       WHERE u.id = $1`,
+      [userId]
+    );
+
+    res.json({
+      message: 'Profil erfolgreich aktualisiert',
+      user: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Fehler beim Aktualisieren des Profils:', error);
+    res.status(500).json({ error: 'Serverfehler beim Aktualisieren des Profils' });
   }
 };
 
@@ -393,6 +432,7 @@ module.exports = {
   register,
   login,
   getProfile,
+  updateProfile,
   deleteAccount,
   changePassword,
   requestPasswordReset,

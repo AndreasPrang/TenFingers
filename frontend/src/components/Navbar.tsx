@@ -71,7 +71,7 @@ const Navbar: React.FC = () => {
                   onClick={() => setDropdownOpen(!dropdownOpen)}
                 >
                   <span className="navbar-username">
-                    {user?.username}
+                    {user?.display_name || user?.username}
                     {user?.role === 'teacher' && <span className="user-badge">LEHRER</span>}
                   </span>
                   <span className={`dropdown-arrow ${dropdownOpen ? 'open' : ''}`}>▼</span>
@@ -80,7 +80,7 @@ const Navbar: React.FC = () => {
                 {dropdownOpen && (
                   <div className="user-dropdown">
                     <div className="dropdown-header">
-                      <div className="dropdown-username">{user?.username}</div>
+                      <div className="dropdown-username">{user?.display_name || user?.username}</div>
                       {user?.email && <div className="dropdown-email">{user?.email}</div>}
                     </div>
                     <div className="dropdown-divider"></div>

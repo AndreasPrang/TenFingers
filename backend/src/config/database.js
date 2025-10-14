@@ -142,6 +142,21 @@ const runMigrations = async () => {
       console.log('✓ Migration: email-Feld ist jetzt optional');
     }
 
+    // Migration: Füge display_name zu users hinzu, falls nicht vorhanden
+    const checkDisplayName = await pool.query(`
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_name='users' AND column_name='display_name'
+    `);
+
+    if (checkDisplayName.rows.length === 0) {
+      await pool.query(`
+        ALTER TABLE users
+        ADD COLUMN display_name VARCHAR(100)
+      `);
+      console.log('✓ Migration: display_name zu users hinzugefügt');
+    }
+
     // Migration: Synchronisiere Standard-Lektionen
     await syncDefaultLessons();
   } catch (error) {
@@ -190,6 +205,7 @@ const initDatabase = async () => {
         username VARCHAR(50) UNIQUE NOT NULL,
         email VARCHAR(100) UNIQUE,
         password_hash VARCHAR(255) NOT NULL,
+        display_name VARCHAR(100),
         role VARCHAR(20) DEFAULT 'student',
         class_id INTEGER,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

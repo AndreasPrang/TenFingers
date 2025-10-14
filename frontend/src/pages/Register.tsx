@@ -5,6 +5,7 @@ import '../styles/Auth.css';
 
 const Register: React.FC = () => {
   const [username, setUsername] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -44,7 +45,7 @@ const Register: React.FC = () => {
     setLoading(true);
 
     try {
-      await register(username, email, password, isTeacher ? 'teacher' : 'student');
+      await register(username, email, password, isTeacher ? 'teacher' : 'student', displayName || undefined);
       navigate(isTeacher ? '/teacher' : '/lessons');
     } catch (err: any) {
       setError(err.response?.data?.error || 'Registrierung fehlgeschlagen. Bitte versuche es erneut.');
@@ -73,6 +74,22 @@ const Register: React.FC = () => {
               required
               disabled={loading}
             />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="displayName">Anzeigename (optional)</label>
+            <input
+              type="text"
+              id="displayName"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder="z.B. Max Mustermann"
+              disabled={loading}
+              maxLength={100}
+            />
+            <small className="form-hint">
+              Dein Anzeigename wird deinem Lehrer angezeigt. Wenn du keinen angibst, wird dein Benutzername verwendet.
+            </small>
           </div>
 
           <div className="form-group">
