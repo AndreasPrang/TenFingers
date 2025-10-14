@@ -30,11 +30,14 @@ services:
       PORT: ${PORT:-4000}
       DATABASE_URL: ${DATABASE_URL:-postgresql://tenfingers:tenfingers123@db:5432/tenfingers}
       JWT_SECRET: ${JWT_SECRET:-dev-secret-key-change-in-production}
+      MAIL_HOST: ${MAIL_HOST:-mailserver}
+      MAIL_PORT: ${MAIL_PORT:-25}
+      MAIL_FROM: ${MAIL_FROM:-noreply@tenfingers.pra.ng}
     ports:
       - "4000:4000"
     volumes:
-      - ./backend:/app
-      - /app/node_modules
+      - ./backend/src:/app/src:ro
+      - backend_node_modules:/app/node_modules
     depends_on:
       db:
         condition: service_healthy
@@ -56,8 +59,20 @@ services:
     networks:
       - tenfingers-network
 
+  mailserver:
+    image: mwader/postfix-relay
+    container_name: tenfingers-mailserver
+    restart: unless-stopped
+    environment:
+      - POSTFIX_myhostname=tenfingers.pra.ng
+      # Localhost und Docker-Bridge-Netzwerk erlauben
+      - POSTFIX_mynetworks=127.0.0.0/8 172.16.0.0/12
+    networks:
+      - tenfingers-network
+
 volumes:
   postgres_data:
+  backend_node_modules:
 
 networks:
   tenfingers-network:

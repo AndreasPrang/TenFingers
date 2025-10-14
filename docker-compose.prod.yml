@@ -49,6 +49,9 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       PORT: 4000
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      MAIL_HOST: ${MAIL_HOST:-mailserver}
+      MAIL_PORT: ${MAIL_PORT:-25}
+      MAIL_FROM: ${MAIL_FROM:-noreply@tenfingers.pra.ng}
     # Keine externe Port-Bindung - nur intern über Docker-Netzwerk
     expose:
       - "4000"
@@ -151,6 +154,35 @@ services:
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
     networks:
       - tenfingers-network
+
+  mailserver:
+    image: mwader/postfix-relay
+    container_name: tenfingers-mailserver
+    restart: always
+    environment:
+      - POSTFIX_myhostname=tenfingers.pra.ng
+      # Nur localhost und Docker-Bridge-Netzwerk erlauben
+      - POSTFIX_mynetworks=127.0.0.0/8 172.16.0.0/12
+    networks:
+      - tenfingers-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "25"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   postgres_data:
