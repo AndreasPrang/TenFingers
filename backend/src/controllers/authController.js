@@ -1,6 +1,8 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const { pool } = require('../config/database');
+const { sendPasswordReset } = require('../services/mailService');
 
 const register = async (req, res) => {
   try {
@@ -249,4 +251,150 @@ const changePassword = async (req, res) => {
   }
 };
 
-module.exports = { register, login, getProfile, deleteAccount, changePassword };
+/**
+ * Passwort-Reset anfragen
+ * Generiert Token und sendet E-Mail nur wenn Account mit E-Mail existiert
+ */
+const requestPasswordReset = async (req, res) => {
+  try {
+    const { usernameOrEmail } = req.body;
+
+    if (!usernameOrEmail) {
+      return res.status(400).json({ error: 'Benutzername oder E-Mail erforderlich' });
+    }
+
+    // Suche User nach Username oder E-Mail
+    const result = await pool.query(
+      'SELECT id, username, email FROM users WHERE username = $1 OR email = $1',
+      [usernameOrEmail]
+    );
+
+    // Aus Sicherheitsgründen immer erfolgreiche Response zurückgeben
+    // (verhindert User-Enumeration)
+    if (result.rows.length === 0 || !result.rows[0].email) {
+      return res.json({
+        message: 'Falls ein Account mit dieser E-Mail existiert, wurde eine E-Mail zum Zurücksetzen des Passworts versendet.'
+      });
+    }
+
+    const user = result.rows[0];
+
+    // Generiere sicheren Token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+
+    // Token ist 1 Stunde gültig
+    const expiresAt = new Date(Date.now() + 3600000); // 1 Stunde
+
+    // Lösche alte Tokens für diesen User
+    await pool.query(
+      'DELETE FROM password_reset_tokens WHERE user_id = $1',
+      [user.id]
+    );
+
+    // Speichere gehashten Token in DB
+    await pool.query(
+      'INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES ($1, $2, $3)',
+      [user.id, hashedToken, expiresAt]
+    );
+
+    // Sende E-Mail mit unhashed Token
+    try {
+      await sendPasswordReset(user.email, user.username, resetToken);
+      console.log(`✓ Passwort-Reset E-Mail an ${user.email} versendet`);
+    } catch (mailError) {
+      console.error('Fehler beim Versenden der Reset-E-Mail:', mailError);
+      // Lösche Token wenn E-Mail nicht versendet werden konnte
+      await pool.query(
+        'DELETE FROM password_reset_tokens WHERE user_id = $1',
+        [user.id]
+      );
+      return res.status(500).json({ error: 'E-Mail konnte nicht versendet werden' });
+    }
+
+    res.json({
+      message: 'Falls ein Account mit dieser E-Mail existiert, wurde eine E-Mail zum Zurücksetzen des Passworts versendet.'
+    });
+  } catch (error) {
+    console.error('Fehler bei Passwort-Reset-Anfrage:', error);
+    res.status(500).json({ error: 'Serverfehler bei der Passwort-Reset-Anfrage' });
+  }
+};
+
+/**
+ * Passwort mit Token zurücksetzen
+ */
+const resetPassword = async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) {
+      return res.status(400).json({ error: 'Token und neues Passwort sind erforderlich' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'Passwort muss mindestens 6 Zeichen lang sein' });
+    }
+
+    // Hash den Token für DB-Vergleich
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    // Finde Token in DB
+    const tokenResult = await pool.query(
+      `SELECT prt.user_id, prt.expires_at, prt.used, u.username, u.email
+       FROM password_reset_tokens prt
+       JOIN users u ON prt.user_id = u.id
+       WHERE prt.token = $1`,
+      [hashedToken]
+    );
+
+    if (tokenResult.rows.length === 0) {
+      return res.status(400).json({ error: 'Ungültiger oder abgelaufener Reset-Link' });
+    }
+
+    const resetToken = tokenResult.rows[0];
+
+    // Prüfe ob Token bereits verwendet wurde
+    if (resetToken.used) {
+      return res.status(400).json({ error: 'Dieser Reset-Link wurde bereits verwendet' });
+    }
+
+    // Prüfe ob Token abgelaufen ist
+    if (new Date() > new Date(resetToken.expires_at)) {
+      return res.status(400).json({ error: 'Dieser Reset-Link ist abgelaufen' });
+    }
+
+    // Hash neues Passwort
+    const saltRounds = 10;
+    const newPasswordHash = await bcrypt.hash(newPassword, saltRounds);
+
+    // Update Passwort
+    await pool.query(
+      'UPDATE users SET password_hash = $1 WHERE id = $2',
+      [newPasswordHash, resetToken.user_id]
+    );
+
+    // Markiere Token als verwendet
+    await pool.query(
+      'UPDATE password_reset_tokens SET used = TRUE WHERE token = $1',
+      [hashedToken]
+    );
+
+    console.log(`✓ Passwort für User ${resetToken.username} erfolgreich zurückgesetzt`);
+
+    res.json({ message: 'Passwort erfolgreich zurückgesetzt. Du kannst dich jetzt mit dem neuen Passwort anmelden.' });
+  } catch (error) {
+    console.error('Fehler beim Zurücksetzen des Passworts:', error);
+    res.status(500).json({ error: 'Serverfehler beim Zurücksetzen des Passworts' });
+  }
+};
+
+module.exports = {
+  register,
+  login,
+  getProfile,
+  deleteAccount,
+  changePassword,
+  requestPasswordReset,
+  resetPassword
+};

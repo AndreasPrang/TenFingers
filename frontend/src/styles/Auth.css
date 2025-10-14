@@ -174,6 +174,40 @@
   text-decoration: underline;
 }
 
+.forgot-password-link {
+  text-align: right;
+  margin-top: -10px;
+  margin-bottom: 10px;
+}
+
+.forgot-password-link a {
+  color: #667eea;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.forgot-password-link a:hover {
+  text-decoration: underline;
+}
+
+.success-message {
+  background: #4caf50;
+  color: #ffffff;
+  padding: 18px 24px;
+  border-radius: 10px;
+  border: 3px solid #388e3c;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  box-shadow: 0 6px 16px rgba(76, 175, 80, 0.4);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  line-height: 1.5;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
 .form-hint {
   display: block;
   color: #666;

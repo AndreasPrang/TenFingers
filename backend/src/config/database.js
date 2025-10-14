@@ -246,6 +246,18 @@ const initDatabase = async () => {
       )
     `);
 
+    // Password Reset Tokens Tabelle
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS password_reset_tokens (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        token VARCHAR(255) UNIQUE NOT NULL,
+        expires_at TIMESTAMP NOT NULL,
+        used BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
     // Erstelle Default-Lektionen, falls nicht vorhanden
     const lessonCheck = await pool.query('SELECT COUNT(*) FROM lessons');
     if (lessonCheck.rows[0].count === '0') {

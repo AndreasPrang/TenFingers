@@ -1,6 +1,14 @@
 const express = require('express');
 const router = express.Router();
-const { register, login, getProfile, deleteAccount, changePassword } = require('../controllers/authController');
+const {
+  register,
+  login,
+  getProfile,
+  deleteAccount,
+  changePassword,
+  requestPasswordReset,
+  resetPassword
+} = require('../controllers/authController');
 const { authenticateToken } = require('../middleware/auth');
 
 /**
@@ -212,5 +220,100 @@ router.delete('/account', authenticateToken, deleteAccount);
  *               $ref: '#/components/schemas/Error'
  */
 router.put('/password', authenticateToken, changePassword);
+
+/**
+ * @swagger
+ * /api/auth/request-password-reset:
+ *   post:
+ *     summary: Passwort-Reset anfordern
+ *     description: Sendet eine E-Mail mit Reset-Link, falls ein Account mit der angegebenen E-Mail oder dem Benutzernamen existiert
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - usernameOrEmail
+ *             properties:
+ *               usernameOrEmail:
+ *                 type: string
+ *                 example: maxmustermann
+ *                 description: Benutzername oder E-Mail-Adresse
+ *     responses:
+ *       200:
+ *         description: Request erfolgreich verarbeitet
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: Validierungsfehler
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Serverfehler
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.post('/request-password-reset', requestPasswordReset);
+
+/**
+ * @swagger
+ * /api/auth/reset-password:
+ *   post:
+ *     summary: Passwort mit Token zurücksetzen
+ *     description: Setzt das Passwort mit einem gültigen Reset-Token zurück
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - token
+ *               - newPassword
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 example: a1b2c3d4e5f6...
+ *                 description: Reset-Token aus der E-Mail
+ *               newPassword:
+ *                 type: string
+ *                 example: neuesPasswort123
+ *                 description: Neues Passwort (mindestens 6 Zeichen)
+ *     responses:
+ *       200:
+ *         description: Passwort erfolgreich zurückgesetzt
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: Ungültiger oder abgelaufener Token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Serverfehler
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.post('/reset-password', resetPassword);
 
 module.exports = router;
