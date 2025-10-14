@@ -88,19 +88,19 @@ const Keyboard: React.FC<KeyboardProps> = ({ currentKey, pressedKey, highlightKe
       <div className="finger-legend">
         <div className="legend-item">
           <span className="legend-color pinky-left"></span>
-          <span>Linker kleiner Finger</span>
+          <span>Linker kl. Finger</span>
         </div>
         <div className="legend-item">
           <span className="legend-color ring-left"></span>
-          <span>Linker Ringfinger</span>
+          <span>L. Ringfinger</span>
         </div>
         <div className="legend-item">
           <span className="legend-color middle-left"></span>
-          <span>Linker Mittelfinger</span>
+          <span>L. Mittelfinger</span>
         </div>
         <div className="legend-item">
           <span className="legend-color index-left"></span>
-          <span>Linker Zeigefinger</span>
+          <span>L. Zeigefinger</span>
         </div>
         <div className="legend-item">
           <span className="legend-color thumb"></span>
@@ -108,19 +108,19 @@ const Keyboard: React.FC<KeyboardProps> = ({ currentKey, pressedKey, highlightKe
         </div>
         <div className="legend-item">
           <span className="legend-color index-right"></span>
-          <span>Rechter Zeigefinger</span>
+          <span>R. Zeigefinger</span>
         </div>
         <div className="legend-item">
           <span className="legend-color middle-right"></span>
-          <span>Rechter Mittelfinger</span>
+          <span>R. Mittelfinger</span>
         </div>
         <div className="legend-item">
           <span className="legend-color ring-right"></span>
-          <span>Rechter Ringfinger</span>
+          <span>R. Ringfinger</span>
         </div>
         <div className="legend-item">
           <span className="legend-color pinky-right"></span>
-          <span>Rechter kleiner Finger</span>
+          <span>Rechter kl. Finger</span>
         </div>
       </div>
     </div>
