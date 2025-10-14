@@ -121,21 +121,6 @@ const Settings: React.FC = () => {
             {profileMessage && <div className="success-message">{profileMessage}</div>}
 
             <div className="form-group">
-              <label htmlFor="email">E-Mail-Adresse (optional)</label>
-              <input
-                type="email"
-                id="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="z.B. max@example.com"
-                disabled={updatingProfile}
-              />
-              <small className="form-hint">
-                Deine E-Mail-Adresse wird für Passwort-Resets benötigt. Wenn du keine E-Mail angibst, kannst du dein Passwort nicht zurücksetzen.
-              </small>
-            </div>
-
-            <div className="form-group">
               <label htmlFor="displayName">Anzeigename (optional)</label>
               <input
                 type="text"
@@ -148,6 +133,21 @@ const Settings: React.FC = () => {
               />
               <small className="form-hint">
                 Dein Anzeigename wird deinem Lehrer angezeigt. Wenn du keinen angibst, wird dein Benutzername verwendet.
+              </small>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="email">E-Mail-Adresse (optional)</label>
+              <input
+                type="email"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="z.B. max@example.com"
+                disabled={updatingProfile}
+              />
+              <small className="form-hint">
+                Deine E-Mail-Adresse wird für Passwort-Resets benötigt. Wenn du keine E-Mail angibst, kannst du dein Passwort nicht zurücksetzen.
               </small>
             </div>
 
