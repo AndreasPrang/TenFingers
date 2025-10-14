@@ -48,6 +48,14 @@ interface DashboardStats {
 
 const COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981'];
 
+// Funktion zum Formatieren von Datum für bessere Lesbarkeit
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  return `${day}.${month}.`;
+};
+
 const AdminDashboard: React.FC = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [registrationsData, setRegistrationsData] = useState<any[]>([]);
@@ -240,9 +248,15 @@ const AdminDashboard: React.FC = () => {
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={registrationsData}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
+              <XAxis
+                dataKey="date"
+                tickFormatter={formatDate}
+                angle={-45}
+                textAnchor="end"
+                height={80}
+              />
               <YAxis />
-              <Tooltip />
+              <Tooltip labelFormatter={formatDate} />
               <Legend />
               <Line type="monotone" dataKey="value" stroke="#6366f1" name="Registrierungen" />
             </LineChart>
@@ -255,9 +269,15 @@ const AdminDashboard: React.FC = () => {
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={practiceSessionsData}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
+              <XAxis
+                dataKey="date"
+                tickFormatter={formatDate}
+                angle={-45}
+                textAnchor="end"
+                height={80}
+              />
               <YAxis />
-              <Tooltip />
+              <Tooltip labelFormatter={formatDate} />
               <Legend />
               <Line type="monotone" dataKey="value" stroke="#10b981" name="Sessions" />
             </LineChart>
@@ -270,9 +290,15 @@ const AdminDashboard: React.FC = () => {
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={activeUsersData}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
+              <XAxis
+                dataKey="date"
+                tickFormatter={formatDate}
+                angle={-45}
+                textAnchor="end"
+                height={80}
+              />
               <YAxis />
-              <Tooltip />
+              <Tooltip labelFormatter={formatDate} />
               <Legend />
               <Line type="monotone" dataKey="value" stroke="#f59e0b" name="Aktive Nutzer" />
             </LineChart>
