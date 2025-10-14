@@ -15,6 +15,7 @@ const Home: React.FC = () => {
   const [stats, setStats] = useState({ wpm: 0, accuracy: 100 });
   const startTime = useRef<number>(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const errorCount = useRef<number>(0);
 
   // Lade einen zufälligen Übungstext
   const loadRandomText = async () => {
@@ -58,6 +59,18 @@ const Home: React.FC = () => {
     if (lastIndex >= 0 && newInput[lastIndex] !== practiceText[lastIndex]) {
       setShowError(true);
       setTimeout(() => setShowError(false), 300);
+      errorCount.current++;
+
+      // Calculate stats after error
+      if (startTime.current > 0) {
+        const elapsedMinutes = (Date.now() - startTime.current) / 60000;
+        const words = userInput.length / 5;
+        const wpm = elapsedMinutes > 0 ? words / elapsedMinutes : 0;
+        // Calculate accuracy: correct keystrokes / total keystrokes * 100
+        const totalKeystrokes = userInput.length + errorCount.current;
+        const accuracy = totalKeystrokes > 0 ? (userInput.length / totalKeystrokes) * 100 : 100;
+        setStats({ wpm, accuracy });
+      }
       return;
     }
 
@@ -69,11 +82,14 @@ const Home: React.FC = () => {
       const elapsedMinutes = (Date.now() - startTime.current) / 60000;
       const words = newInput.length / 5;
       const wpm = elapsedMinutes > 0 ? words / elapsedMinutes : 0;
-      const accuracy = 100;
+      // Calculate accuracy: correct keystrokes / total keystrokes * 100
+      const totalKeystrokes = newInput.length + errorCount.current;
+      const accuracy = totalKeystrokes > 0 ? (newInput.length / totalKeystrokes) * 100 : 100;
       setStats({ wpm, accuracy });
     }
 
-    if (newInput.length >= practiceText.length) {
+    // Check if completed - verify ALL characters match, not just length
+    if (newInput.length >= practiceText.length && newInput === practiceText) {
       setCompleted(true);
     }
   };
@@ -84,6 +100,7 @@ const Home: React.FC = () => {
     setCompleted(false);
     setStats({ wpm: 0, accuracy: 100 });
     startTime.current = 0;
+    errorCount.current = 0;
     loadRandomText(); // Lade einen neuen zufälligen Text
     if (inputRef.current) {
       inputRef.current.focus();
