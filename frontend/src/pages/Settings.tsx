@@ -10,6 +10,7 @@ const Settings: React.FC = () => {
 
   // Profile state
   const [displayName, setDisplayName] = useState(user?.display_name || '');
+  const [email, setEmail] = useState(user?.email || '');
   const [profileMessage, setProfileMessage] = useState('');
   const [profileError, setProfileError] = useState('');
   const [updatingProfile, setUpdatingProfile] = useState(false);
@@ -33,7 +34,10 @@ const Settings: React.FC = () => {
 
     setUpdatingProfile(true);
     try {
-      const response = await authAPI.updateProfile({ displayName: displayName || null });
+      const response = await authAPI.updateProfile({
+        displayName: displayName || null,
+        email: email || null
+      });
       setProfileMessage(response.message);
 
       // Update user context
@@ -115,6 +119,21 @@ const Settings: React.FC = () => {
           <form onSubmit={handleProfileUpdate} className="profile-form">
             {profileError && <div className="error-message">{profileError}</div>}
             {profileMessage && <div className="success-message">{profileMessage}</div>}
+
+            <div className="form-group">
+              <label htmlFor="email">E-Mail-Adresse (optional)</label>
+              <input
+                type="email"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="z.B. max@example.com"
+                disabled={updatingProfile}
+              />
+              <small className="form-hint">
+                Deine E-Mail-Adresse wird für Passwort-Resets benötigt. Wenn du keine E-Mail angibst, kannst du dein Passwort nicht zurücksetzen.
+              </small>
+            </div>
 
             <div className="form-group">
               <label htmlFor="displayName">Anzeigename (optional)</label>

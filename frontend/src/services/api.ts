@@ -41,7 +41,7 @@ export const authAPI = {
     return response.data;
   },
 
-  updateProfile: async (data: { displayName?: string | null }): Promise<{ message: string; user: any }> => {
+  updateProfile: async (data: { displayName?: string | null; email?: string | null }): Promise<{ message: string; user: any }> => {
     const response = await api.put('/auth/profile', data);
     return response.data;
   },

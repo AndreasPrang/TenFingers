@@ -209,15 +209,30 @@ const deleteAccount = async (req, res) => {
 const updateProfile = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const { displayName } = req.body;
+    const { displayName, email } = req.body;
 
     // Display Name auf null setzen wenn leer
     const userDisplayName = (displayName && displayName.trim() !== '') ? displayName.trim() : null;
 
+    // E-Mail auf null setzen wenn leer
+    const userEmail = (email && email.trim() !== '') ? email.trim() : null;
+
+    // Prüfe ob E-Mail bereits von anderem User verwendet wird
+    if (userEmail) {
+      const emailCheck = await pool.query(
+        'SELECT id FROM users WHERE email = $1 AND id != $2',
+        [userEmail, userId]
+      );
+
+      if (emailCheck.rows.length > 0) {
+        return res.status(400).json({ error: 'Diese E-Mail wird bereits von einem anderen Account verwendet' });
+      }
+    }
+
     // Update Profil
     await pool.query(
-      'UPDATE users SET display_name = $1 WHERE id = $2',
-      [userDisplayName, userId]
+      'UPDATE users SET display_name = $1, email = $2 WHERE id = $3',
+      [userDisplayName, userEmail, userId]
     );
 
     // Hole aktualisiertes Profil
