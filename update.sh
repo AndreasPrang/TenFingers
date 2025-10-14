@@ -103,34 +103,45 @@ success "Code aktualisiert auf $GIT_REF"
 # ======================
 # 3. Docker Image Version wählen
 # ======================
+
+# Finde die richtige .env Datei (entweder .env oder .env.production)
+ENV_FILE=".env"
+if [ ! -f "$ENV_FILE" ]; then
+    ENV_FILE=".env.production"
+fi
+
+if [ ! -f "$ENV_FILE" ]; then
+    error "Keine .env Datei gefunden! Bitte erstelle .env oder .env.production"
+fi
+
 echo -e "${YELLOW}"
 echo "Welche Docker Image Version möchtest du deployen?"
 echo "  - 'latest' für die neueste Version vom main Branch"
 echo "  - Eine spezifische Version wie 'v1.0.0'"
-echo "  - Aktuell konfiguriert: $(grep '^IMAGE_TAG=' .env.production | cut -d= -f2)"
+if grep -q "^IMAGE_TAG=" $ENV_FILE 2>/dev/null; then
+    echo "  - Aktuell konfiguriert: $(grep '^IMAGE_TAG=' $ENV_FILE | cut -d= -f2)"
+else
+    echo "  - Aktuell: IMAGE_TAG nicht gesetzt"
+fi
 read -p "Image Tag [latest]: " IMAGE_TAG
 IMAGE_TAG=${IMAGE_TAG:-latest}
 echo -e "${NC}"
 
-# Aktualisiere IMAGE_TAG in .env.production
-if [ -f ".env.production" ]; then
-    if grep -q "^IMAGE_TAG=" .env.production; then
-        sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=$IMAGE_TAG/" .env.production
-        success "IMAGE_TAG in .env.production auf '$IMAGE_TAG' gesetzt"
-    else
-        echo "IMAGE_TAG=$IMAGE_TAG" >> .env.production
-        success "IMAGE_TAG in .env.production hinzugefügt: '$IMAGE_TAG'"
-    fi
+# Aktualisiere IMAGE_TAG in der .env Datei
+if grep -q "^IMAGE_TAG=" $ENV_FILE; then
+    sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=$IMAGE_TAG/" $ENV_FILE
+    success "IMAGE_TAG in $ENV_FILE auf '$IMAGE_TAG' gesetzt"
 else
-    error ".env.production nicht gefunden!"
+    echo "IMAGE_TAG=$IMAGE_TAG" >> $ENV_FILE
+    success "IMAGE_TAG in $ENV_FILE hinzugefügt: '$IMAGE_TAG'"
 fi
 
 # ======================
 # 4. Environment-Variablen laden
 # ======================
-info "Lade Environment-Variablen..."
+info "Lade Environment-Variablen aus $ENV_FILE..."
 set -a
-source .env.production
+source $ENV_FILE
 set +a
 success "Environment-Variablen geladen"
 
