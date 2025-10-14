@@ -4,7 +4,7 @@
       "command": "/opt/homebrew/bin/chrome-devtools-mcp",
       "args": [
         "--viewport",
-        "1920x1080"
+        "1280x720"
       ],
       "env": {}
     }

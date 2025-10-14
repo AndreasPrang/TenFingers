@@ -186,4 +186,29 @@ export const classesAPI = {
   },
 };
 
+// Admin API (nur für Admins)
+export const adminAPI = {
+  getDashboardStats: async (): Promise<any> => {
+    const response = await api.get('/admin/dashboard');
+    return response.data;
+  },
+
+  getTimeSeriesData: async (metric: string, days: number = 30): Promise<any> => {
+    const response = await api.get('/admin/timeseries', {
+      params: { metric, days }
+    });
+    return response.data;
+  },
+
+  getPerformanceDistribution: async (): Promise<any> => {
+    const response = await api.get('/admin/performance-distribution');
+    return response.data;
+  },
+
+  getPopularLessons: async (): Promise<any> => {
+    const response = await api.get('/admin/popular-lessons');
+    return response.data;
+  },
+};
+
 export default api;

@@ -14,6 +14,7 @@ import Practice from './pages/Practice';
 import TeacherDashboard from './pages/TeacherDashboard';
 import ClassManagement from './pages/ClassManagement';
 import Settings from './pages/Settings';
+import AdminDashboard from './pages/AdminDashboard';
 import Privacy from './pages/Privacy';
 import Imprint from './pages/Imprint';
 import './App.css';
@@ -21,10 +22,11 @@ import './App.css';
 // Protected Route Component
 interface ProtectedRouteProps {
   children: React.ReactElement;
+  requireAdmin?: boolean;
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requireAdmin = false }) => {
+  const { isAuthenticated, loading, user } = useAuth();
 
   if (loading) {
     return (
@@ -35,7 +37,15 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     );
   }
 
-  return isAuthenticated ? children : <Navigate to="/login" />;
+  if (!isAuthenticated) {
+    return <Navigate to="/login" />;
+  }
+
+  if (requireAdmin && user?.role !== 'admin') {
+    return <Navigate to="/dashboard" />;
+  }
+
+  return children;
 };
 
 // Public Route Component (redirect to dashboard if already logged in)
@@ -119,6 +129,14 @@ function AppContent() {
             element={
               <ProtectedRoute>
                 <Settings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute requireAdmin={true}>
+                <AdminDashboard />
               </ProtectedRoute>
             }
           />

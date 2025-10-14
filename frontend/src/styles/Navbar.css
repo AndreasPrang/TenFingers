@@ -107,6 +107,11 @@
   letter-spacing: 0.5px;
 }
 
+.user-badge.admin {
+  background: #fbbf24;
+  color: #78350f;
+}
+
 .dropdown-arrow {
   font-size: 10px;
   transition: transform 0.3s ease;

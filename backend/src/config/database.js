@@ -206,7 +206,7 @@ const initDatabase = async () => {
         email VARCHAR(100) UNIQUE,
         password_hash VARCHAR(255) NOT NULL,
         display_name VARCHAR(100),
-        role VARCHAR(20) DEFAULT 'student',
+        role VARCHAR(20) DEFAULT 'student' CHECK (role IN ('student', 'teacher', 'admin')),
         class_id INTEGER,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )

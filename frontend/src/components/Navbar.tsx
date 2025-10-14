@@ -20,6 +20,11 @@ const Navbar: React.FC = () => {
     setDropdownOpen(false);
   };
 
+  const handleAdminClick = () => {
+    navigate('/admin');
+    setDropdownOpen(false);
+  };
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -52,18 +57,13 @@ const Navbar: React.FC = () => {
 
           {isAuthenticated ? (
             <>
-              {user?.role === 'teacher' ? (
-                <>
-                  <Link to="/teacher" className="navbar-link">
-                    Meine Klassen
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <Link to="/dashboard" className="navbar-link">
-                    Dashboard
-                  </Link>
-                </>
+              <Link to="/dashboard" className="navbar-link">
+                Dashboard
+              </Link>
+              {user?.role === 'teacher' && (
+                <Link to="/teacher" className="navbar-link">
+                  Meine Klassen
+                </Link>
               )}
               <div className="navbar-user" ref={dropdownRef}>
                 <button
@@ -72,6 +72,7 @@ const Navbar: React.FC = () => {
                 >
                   <span className="navbar-username">
                     {user?.display_name || user?.username}
+                    {user?.role === 'admin' && <span className="user-badge admin">ADMIN</span>}
                     {user?.role === 'teacher' && <span className="user-badge">LEHRER</span>}
                   </span>
                   <span className={`dropdown-arrow ${dropdownOpen ? 'open' : ''}`}>▼</span>
@@ -84,6 +85,15 @@ const Navbar: React.FC = () => {
                       {user?.email && <div className="dropdown-email">{user?.email}</div>}
                     </div>
                     <div className="dropdown-divider"></div>
+                    {user?.role === 'admin' && (
+                      <>
+                        <button className="dropdown-item" onClick={handleAdminClick}>
+                          <span className="dropdown-icon">👑</span>
+                          Admin Dashboard
+                        </button>
+                        <div className="dropdown-divider"></div>
+                      </>
+                    )}
                     <button className="dropdown-item" onClick={handleSettingsClick}>
                       <span className="dropdown-icon">⚙️</span>
                       Einstellungen
