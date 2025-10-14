@@ -29,11 +29,11 @@ const Home: React.FC = () => {
       console.error('Fehler beim Laden des Textes:', error);
       // Fallback zu einem zufälligen Text aus einer Liste
       const fallbackTexts = [
-        'das schnelle braune pferd springt ueber den faulen hund',
-        'uebung macht den meister und bringt erfolg',
-        'tippen lernen ist einfacher als du denkst',
-        'konzentration und geduld fuehren zum erfolg',
-        'jeden tag ein bisschen besser werden'
+        'Das schnelle braune Pferd springt über den faulen Hund',
+        'Übung macht den Meister und bringt Erfolg',
+        'Tippen lernen ist einfacher als du denkst',
+        'Konzentration und Geduld führen zum Erfolg',
+        'Jeden Tag ein bisschen besser werden'
       ];
       const randomIndex = Math.floor(Math.random() * fallbackTexts.length);
       setPracticeText(fallbackTexts[randomIndex]);
