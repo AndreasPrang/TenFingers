@@ -42,6 +42,14 @@ app.get('/api-docs.json', (req, res) => {
   res.send(swaggerSpec);
 });
 
+// Version Endpoint
+app.get('/api/version', (req, res) => {
+  res.json({
+    version: process.env.GIT_COMMIT || 'unknown',
+    shortVersion: (process.env.GIT_COMMIT || 'unknown').substring(0, 7)
+  });
+});
+
 // Health Check
 app.get('/api/health', async (req, res) => {
   try {
@@ -53,7 +61,8 @@ app.get('/api/health', async (req, res) => {
       status: 'ok',
       message: 'TenFingers API läuft',
       timestamp: new Date().toISOString(),
-      database: 'connected'
+      database: 'connected',
+      version: (process.env.GIT_COMMIT || 'unknown').substring(0, 7)
     });
   } catch (error) {
     res.status(503).json({

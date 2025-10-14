@@ -1,9 +1,33 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import '../styles/Footer.css';
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
+  const [version, setVersion] = useState<string>('');
+  const [fullVersion, setFullVersion] = useState<string>('');
+
+  useEffect(() => {
+    // Version aus Build-Zeit (Frontend)
+    const frontendVersion = process.env.REACT_APP_VERSION;
+    if (frontendVersion) {
+      setVersion(frontendVersion.substring(0, 7));
+      setFullVersion(frontendVersion);
+    }
+
+    // Hole auch Backend-Version
+    fetch('/api/version')
+      .then(res => res.json())
+      .then(data => {
+        if (data.shortVersion && data.shortVersion !== 'unknown') {
+          setVersion(data.shortVersion);
+          setFullVersion(data.version);
+        }
+      })
+      .catch(() => {
+        // Fallback auf Frontend-Version wenn Backend nicht erreichbar
+      });
+  }, []);
 
   return (
     <footer className="footer">
@@ -49,7 +73,17 @@ const Footer: React.FC = () => {
       </div>
 
       <div className="footer-bottom">
-        <p>© {currentYear} TenFingers. Alle Rechte vorbehalten.</p>
+        <p>
+          © {currentYear} TenFingers. Alle Rechte vorbehalten.
+          {version && (
+            <span
+              className="version-info"
+              title={`Git Commit: ${fullVersion}`}
+            >
+              {' '}v{version}
+            </span>
+          )}
+        </p>
         <p className="footer-note">
           Entwickelt mit ❤️ für besseres Tippen
         </p>

@@ -1,5 +1,9 @@
 FROM node:18-alpine
 
+# Build argument für Git Commit Hash
+ARG GIT_COMMIT=unknown
+ENV GIT_COMMIT=${GIT_COMMIT}
+
 # Installiere curl für healthcheck
 RUN apk add --no-cache curl
 
