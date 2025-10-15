@@ -91,7 +91,7 @@ const Footer: React.FC = () => {
           )}
         </p>
         <p className="footer-note">
-          Entwickelt mit ❤️ für besseres Tippen
+          Entwickelt mit ❤️ in Berlin
         </p>
       </div>
     </footer>
