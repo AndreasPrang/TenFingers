@@ -25,13 +25,6 @@
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
 
-/* Dashboard Badge Section */
-.dashboard-badge-section {
-  text-align: center;
-  margin-bottom: 25px;
-  padding-bottom: 25px;
-  border-bottom: 1px solid #e0e0e0;
-}
 
 .dashboard-grid {
   display: grid;

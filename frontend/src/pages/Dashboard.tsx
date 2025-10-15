@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { progressAPI, badgesAPI } from '../services/api';
-import { UserStats, CurrentBadgeResponse } from '../types';
+import { progressAPI } from '../services/api';
+import { UserStats } from '../types';
 import { useNavigate } from 'react-router-dom';
-import Badge from '../components/Badge';
+import BadgeCarousel from '../components/BadgeCarousel';
 import BadgeProgress from '../components/BadgeProgress';
 import '../styles/Dashboard.css';
 
@@ -11,7 +11,6 @@ const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [stats, setStats] = useState<UserStats | null>(null);
-  const [currentBadge, setCurrentBadge] = useState<CurrentBadgeResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -20,12 +19,8 @@ const Dashboard: React.FC = () => {
 
   const loadDashboardData = async () => {
     try {
-      const [statsData, badgeData] = await Promise.all([
-        progressAPI.getUserStats(),
-        badgesAPI.getCurrentBadge(),
-      ]);
+      const statsData = await progressAPI.getUserStats();
       setStats(statsData);
-      setCurrentBadge(badgeData);
     } catch (err) {
       console.error('Fehler beim Laden der Dashboard-Daten:', err);
     } finally {
@@ -48,11 +43,7 @@ const Dashboard: React.FC = () => {
       </header>
 
       <div className="dashboard-content">
-        {currentBadge?.currentBadge && (
-          <div className="dashboard-badge-section">
-            <Badge badge={currentBadge.currentBadge} size="large" showDetails={true} />
-          </div>
-        )}
+        <BadgeCarousel />
 
         <div className="dashboard-grid">
           <div className="stats-card">

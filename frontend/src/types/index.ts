@@ -111,6 +111,7 @@ export interface BadgeStats {
 export interface CurrentBadgeResponse {
   currentBadge: Badge | null;
   nextBadge: Badge | null;
+  earnedBadges?: Badge[];
   stats: BadgeStats;
 }
 
