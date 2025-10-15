@@ -126,10 +126,10 @@ const Home: React.FC = () => {
       <section className="hero-section">
         <div className="hero-content">
           <h1 className="hero-title">
-            Lerne das 10-Finger-System
+            Professioneller 10-Finger-Schreibtrainer für Schulen und Privatpersonen
           </h1>
           <p className="hero-subtitle">
-            Probiere es gleich aus - fang einfach an zu tippen!
+            DSGVO-konform, kostenlos und sofort einsetzbar - ohne Installation oder Registrierung
           </p>
 
           {/* Interactive Practice Widget */}
@@ -201,7 +201,7 @@ const Home: React.FC = () => {
       </section>
 
       <section className="features-section">
-        <h2 className="section-title">Warum TypeHero?</h2>
+        <h2 className="section-title">Ihre Vorteile mit TypeHero</h2>
         <div className="features-grid">
           <div className="feature-card">
             <div className="feature-icon">⌨️</div>
@@ -238,79 +238,85 @@ const Home: React.FC = () => {
             <h3>Persönliches Profil</h3>
             <p>Speichere deinen Fortschritt und trainiere überall</p>
           </div>
+
+          <div className="feature-card">
+            <div className="feature-icon">🏆</div>
+            <h3>Achievement-System</h3>
+            <p>Sammle Badges und erreiche neue Level - von Anfänger bis Zehnfinger-Legende</p>
+          </div>
         </div>
       </section>
 
       <section className="school-section">
         <div className="school-content">
-          <h2 className="section-title">Für Schulen und Klassen</h2>
+          <h2 className="section-title">Ideal für Schulen und den Informatikunterricht</h2>
           <p className="section-subtitle">
-            TypeHero ist perfekt für den Einsatz im Informatikunterricht
+            Professionelle Lösung für Lehrkräfte: Klassenverwaltung, Fortschrittskontrolle und vollständige DSGVO-Konformität - entwickelt für den deutschen Bildungssektor
           </p>
 
           <div className="school-grid">
             <div className="school-feature">
               <div className="school-icon">👨‍🏫</div>
-              <h3>Lehrer-Dashboard</h3>
+              <h3>Professionelles Lehrer-Dashboard</h3>
               <p>
-                Erstelle und verwalte Klassen, lege Schüler-Accounts an und behalte den
-                Überblick über den Lernfortschritt deiner Schüler.
+                Verwalten Sie Ihre Klassen zentral, erstellen Sie Schüler-Accounts mit einem Klick
+                und behalten Sie den Lernfortschritt Ihrer Klassen jederzeit im Überblick.
               </p>
             </div>
 
             <div className="school-feature">
               <div className="school-icon">👥</div>
-              <h3>Bulk-Erstellung</h3>
+              <h3>Effiziente Account-Verwaltung</h3>
               <p>
-                Erstelle bis zu 35 Schüler-Accounts gleichzeitig mit automatisch generierten
-                Passwörtern. Exportiere die Zugangsdaten als CSV.
+                Erstellen Sie bis zu 35 Schüler-Accounts pro Klasse gleichzeitig.
+                Automatische Passwort-Generierung und CSV-Export für einfache Weitergabe.
               </p>
             </div>
 
             <div className="school-feature">
               <div className="school-icon">📈</div>
-              <h3>Fortschritts-Übersicht</h3>
+              <h3>Detaillierte Leistungsübersicht</h3>
               <p>
-                Sieh auf einen Blick, welche Schüler welche Lektionen abgeschlossen haben
-                und wie ihre Leistungen sind.
+                Transparente Einsicht in Lernfortschritte: Sehen Sie auf einen Blick,
+                welche Lektionen absolviert wurden und wie die Leistungsentwicklung verläuft.
               </p>
             </div>
 
             <div className="school-feature">
               <div className="school-icon">🔒</div>
-              <h3>DSGVO-konform</h3>
+              <h3>Vollständige DSGVO-Konformität</h3>
               <p>
-                Entwickelt mit Datenschutz im Fokus. Server in Deutschland, keine Weitergabe
-                an Dritte, minimale Datenerfassung, E-Mail optional für Schüler.
+                Datenschutz nach deutschem Standard: Server in Deutschland, keine Datenweitergabe,
+                minimale Datenerfassung. E-Mail-Adressen für Schüler optional.
               </p>
             </div>
 
             <div className="school-feature">
               <div className="school-icon">🆓</div>
-              <h3>Kostenlos</h3>
+              <h3>Dauerhaft kostenfrei</h3>
               <p>
-                Komplett kostenlos, keine versteckten Kosten, keine Werbung,
-                keine Premium-Features. Ein nicht-gewerbliches Bildungsprojekt.
+                Komplett kostenlos für Schulen und Privatpersonen. Keine versteckten Kosten,
+                keine Werbung, keine Premium-Modelle. Ein nicht-gewerbliches Bildungsprojekt.
               </p>
             </div>
 
             <div className="school-feature">
               <div className="school-icon">🌐</div>
-              <h3>Keine Installation</h3>
+              <h3>Sofort einsatzbereit</h3>
               <p>
-                Funktioniert direkt im Browser auf allen Geräten. Keine Software-Installation,
-                keine Updates, einfach URL aufrufen und loslegen.
+                Browserbasierte Lösung ohne Installation. Funktioniert auf allen Geräten,
+                keine Updates erforderlich. Einfach URL aufrufen und starten.
               </p>
             </div>
           </div>
 
           <div className="school-cta">
-            <h3>Datenschutz für Schulen</h3>
+            <h3>Datenschutz im Schulkontext</h3>
             <p>
-              Wir nehmen Datenschutz ernst, besonders im Schulkontext. E-Mail-Adressen sind
-              für Schüler optional, es werden keine Tracking-Tools verwendet, und alle Daten
-              bleiben auf Servern in Deutschland. Lehrer können Schüler-Accounts jederzeit
-              vollständig löschen.
+              Datenschutz nach höchsten Standards: E-Mail-Adressen sind für Schüler optional,
+              es werden keine Tracking-Tools eingesetzt, und sämtliche Daten verbleiben
+              ausschließlich auf Servern in Deutschland. Lehrkräfte haben jederzeit die
+              Möglichkeit, Schüler-Accounts vollständig zu löschen.
             </p>
             <p>
               <Link to="/privacy" className="privacy-link">

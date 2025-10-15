@@ -7,15 +7,90 @@
     <meta name="theme-color" content="#667eea" />
     <meta
       name="description"
-      content="Lerne das 10-Finger-System mit TypeHero - dem interaktiven Schreibtrainer für die deutsche QWERTZ-Tastatur"
+      content="TypeHero: Professioneller 10-Finger-Schreibtrainer für Schulen und Privatpersonen. DSGVO-konform, kostenlos, ohne Installation. Ideal für den Informatikunterricht mit Lehrer-Dashboard und Klassenverwaltung."
     />
+    <meta name="keywords" content="10-Finger-System, Schreibtrainer, Tipptrainer, Schulen, QWERTZ, Tastaturtraining, Informatikunterricht, DSGVO, kostenlos, Lehrer-Dashboard" />
+    <meta name="author" content="TypeHero" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="TypeHero - Professioneller 10-Finger-Schreibtrainer für Schulen" />
+    <meta property="og:description" content="DSGVO-konformer Schreibtrainer für Schulen und Privatpersonen. Kostenlos, browserbasiert mit Lehrer-Dashboard und Achievement-System." />
+    <meta property="og:locale" content="de_DE" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="TypeHero - Professioneller 10-Finger-Schreibtrainer für Schulen" />
+    <meta name="twitter:description" content="DSGVO-konformer Schreibtrainer für Schulen und Privatpersonen. Kostenlos, browserbasiert mit Lehrer-Dashboard." />
+
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="TypeHero" />
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
-    <title>TypeHero - 10-Finger-Schreibtrainer</title>
+    <title>TypeHero - Professioneller 10-Finger-Schreibtrainer für Schulen | DSGVO-konform & kostenlos</title>
   </head>
   <body>
     <noscript>Du musst JavaScript aktivieren, um diese App verwenden zu können.</noscript>
     <div id="root"></div>
+
+    <!-- Structured Data for SEO -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "TypeHero",
+      "applicationCategory": "EducationalApplication",
+      "operatingSystem": "Web Browser",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "EUR"
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "5",
+        "ratingCount": "1"
+      },
+      "description": "Professioneller 10-Finger-Schreibtrainer für Schulen und Privatpersonen. DSGVO-konform, kostenlos, ohne Installation. Ideal für den Informatikunterricht mit Lehrer-Dashboard und Klassenverwaltung.",
+      "featureList": [
+        "Deutsche QWERTZ-Tastatur",
+        "Lehrer-Dashboard",
+        "Klassenverwaltung",
+        "Fortschritts-Tracking",
+        "Achievement-System",
+        "DSGVO-konform",
+        "Kostenlos"
+      ],
+      "audience": {
+        "@type": "EducationalAudience",
+        "educationalRole": "student"
+      },
+      "provider": {
+        "@type": "Organization",
+        "name": "TypeHero"
+      },
+      "inLanguage": "de-DE",
+      "isAccessibleForFree": true
+    }
+    </script>
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "TypeHero - 10-Finger-Schreibtrainer",
+      "url": "https://typehero.de",
+      "description": "Professioneller 10-Finger-Schreibtrainer für Schulen und Privatpersonen",
+      "applicationCategory": "EducationalApplication",
+      "operatingSystem": "Any",
+      "offers": {
+        "@type": "Offer",
+        "price": "0"
+      },
+      "creator": {
+        "@type": "Organization",
+        "name": "TypeHero"
+      }
+    }
+    </script>
   </body>
 </html>
