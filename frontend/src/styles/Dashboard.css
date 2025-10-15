@@ -5,7 +5,7 @@
 }
 
 .dashboard-header {
-  max-width: 900px;
+  max-width: 1200px;
   margin: 0 auto 20px;
   text-align: center;
   color: white;
@@ -17,7 +17,7 @@
 }
 
 .dashboard-content {
-  max-width: 900px;
+  max-width: 1200px;
   margin: 0 auto;
   background: white;
   border-radius: 15px;
