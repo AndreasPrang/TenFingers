@@ -28,9 +28,6 @@ services:
         limits:
           cpus: '1'
           memory: 512M
-        reservations:
-          cpus: '0.5'
-          memory: 256M
 
   backend:
     image: ghcr.io/andreasprang/tenfingers-backend:${IMAGE_TAG:-latest}
@@ -68,9 +65,6 @@ services:
         limits:
           cpus: '1'
           memory: 512M
-        reservations:
-          cpus: '0.25'
-          memory: 128M
     logging:
       driver: "json-file"
       options:
@@ -99,9 +93,6 @@ services:
         limits:
           cpus: '0.5'
           memory: 256M
-        reservations:
-          cpus: '0.25'
-          memory: 128M
     logging:
       driver: "json-file"
       options:
@@ -135,9 +126,6 @@ services:
         limits:
           cpus: '0.5'
           memory: 256M
-        reservations:
-          cpus: '0.1'
-          memory: 64M
     logging:
       driver: "json-file"
       options:
@@ -177,9 +165,6 @@ services:
         limits:
           cpus: '0.25'
           memory: 128M
-        reservations:
-          cpus: '0.1'
-          memory: 64M
     logging:
       driver: "json-file"
       options:
