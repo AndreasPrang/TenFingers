@@ -94,16 +94,37 @@ print_success "nginx.conf generated successfully"
 print_header "Step 2: Checking DNS Configuration"
 
 print_info "Checking if $DOMAIN points to this server..."
-CURRENT_IP=$(curl -s ifconfig.me || curl -s icanhazip.com)
-DOMAIN_IP=$(dig +short $DOMAIN | tail -n1)
 
-print_info "Server IP: $CURRENT_IP"
-print_info "Domain IP: $DOMAIN_IP"
+# Get server IPs
+CURRENT_IPV4=$(curl -4 -s ifconfig.me 2>/dev/null || curl -4 -s icanhazip.com 2>/dev/null)
+CURRENT_IPV6=$(curl -6 -s ifconfig.me 2>/dev/null || curl -6 -s icanhazip.com 2>/dev/null)
 
-if [ "$CURRENT_IP" != "$DOMAIN_IP" ]; then
-    print_warning "DNS does not point to this server yet!"
-    print_warning "Current server IP: $CURRENT_IP"
-    print_warning "Domain resolves to: $DOMAIN_IP"
+# Get domain IPs
+DOMAIN_IPV4=$(dig +short A $DOMAIN | head -n1)
+DOMAIN_IPV6=$(dig +short AAAA $DOMAIN | head -n1)
+
+print_info "Server IPv4: $CURRENT_IPV4"
+print_info "Domain IPv4: $DOMAIN_IPV4"
+print_info "Server IPv6: $CURRENT_IPV6"
+print_info "Domain IPv6: $DOMAIN_IPV6"
+
+# Check if at least one IP matches
+IPV4_MATCH=false
+IPV6_MATCH=false
+
+if [ -n "$CURRENT_IPV4" ] && [ "$CURRENT_IPV4" = "$DOMAIN_IPV4" ]; then
+    IPV4_MATCH=true
+    print_success "IPv4 DNS correctly configured!"
+fi
+
+if [ -n "$CURRENT_IPV6" ] && [ "$CURRENT_IPV6" = "$DOMAIN_IPV6" ]; then
+    IPV6_MATCH=true
+    print_success "IPv6 DNS correctly configured!"
+fi
+
+if [ "$IPV4_MATCH" = false ] && [ "$IPV6_MATCH" = false ]; then
+    print_warning "DNS does not point to this server!"
+    print_warning "At least one IP address (IPv4 or IPv6) must match."
     echo ""
     read -p "Do you want to continue anyway? (y/N) " -n 1 -r
     echo ""
@@ -111,8 +132,6 @@ if [ "$CURRENT_IP" != "$DOMAIN_IP" ]; then
         print_info "Please configure DNS and run this script again."
         exit 1
     fi
-else
-    print_success "DNS is correctly configured!"
 fi
 
 ##############################################################################
