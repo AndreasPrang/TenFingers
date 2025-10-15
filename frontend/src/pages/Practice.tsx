@@ -122,14 +122,26 @@ const Practice: React.FC = () => {
     let currentLength = 0;
     const targetLength = length;
 
+    // Shuffle chars für mehr Variation
+    const shuffledChars = [...chars].sort(() => Math.random() - 0.5);
+
     while (currentLength < targetLength) {
-      // Generiere Wörter mit 2-5 Zeichen
-      const wordLength = Math.floor(Math.random() * 4) + 2;
+      // Variiere Wortlänge zwischen 2-6 Zeichen für mehr Abwechslung
+      const wordLength = Math.floor(Math.random() * 5) + 2;
       let word = '';
 
+      // Vermeide zu viele gleiche Buchstaben direkt hintereinander
+      let lastChar = '';
       for (let i = 0; i < wordLength; i++) {
-        const randomChar = chars[Math.floor(Math.random() * chars.length)];
+        let randomChar;
+        let attempts = 0;
+        do {
+          randomChar = shuffledChars[Math.floor(Math.random() * shuffledChars.length)];
+          attempts++;
+        } while (randomChar === lastChar && attempts < 3 && shuffledChars.length > 1);
+
         word += randomChar;
+        lastChar = randomChar;
       }
 
       words.push(word);
@@ -150,8 +162,9 @@ const Practice: React.FC = () => {
       const randomIndex = Math.floor(Math.random() * texts.length);
       newText = texts[randomIndex];
     } else {
-      // Andere Lektionen: Generiere zufälligen Text oder nutze lesson.text_content
-      newText = lesson.text_content || generatePracticeText(lesson.target_keys);
+      // Andere Lektionen: Generiere IMMER neuen zufälligen Text (auch wenn text_content existiert)
+      // Dies sorgt für Variation bei jedem Durchgang
+      newText = generatePracticeText(lesson.target_keys);
     }
 
     setPracticeText(newText);
