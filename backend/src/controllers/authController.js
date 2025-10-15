@@ -4,6 +4,27 @@ const crypto = require('crypto');
 const { pool } = require('../config/database');
 const { sendPasswordReset } = require('../services/mailService');
 
+/**
+ * Validiert Passwortstärke
+ * @param {string} password
+ * @returns {object} { valid: boolean, error: string }
+ */
+const validatePassword = (password) => {
+  if (!password || password.length < 8) {
+    return { valid: false, error: 'Passwort muss mindestens 8 Zeichen lang sein' };
+  }
+
+  // Prüfe auf mindestens einen Buchstaben und eine Zahl
+  const hasLetter = /[a-zA-Z]/.test(password);
+  const hasNumber = /[0-9]/.test(password);
+
+  if (!hasLetter || !hasNumber) {
+    return { valid: false, error: 'Passwort muss mindestens einen Buchstaben und eine Zahl enthalten' };
+  }
+
+  return { valid: true };
+};
+
 const register = async (req, res) => {
   try {
     const { username, email, password, role, displayName } = req.body;
@@ -14,6 +35,12 @@ const register = async (req, res) => {
     // Validierung
     if (!username || !password) {
       return res.status(400).json({ error: 'Benutzername und Passwort sind erforderlich' });
+    }
+
+    // Passwort-Validierung
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.valid) {
+      return res.status(400).json({ error: passwordValidation.error });
     }
 
     // E-Mail ist Pflicht für Lehrer
@@ -265,8 +292,10 @@ const changePassword = async (req, res) => {
       return res.status(400).json({ error: 'Aktuelles und neues Passwort sind erforderlich' });
     }
 
-    if (newPassword.length < 6) {
-      return res.status(400).json({ error: 'Neues Passwort muss mindestens 6 Zeichen lang sein' });
+    // Passwort-Validierung
+    const passwordValidation = validatePassword(newPassword);
+    if (!passwordValidation.valid) {
+      return res.status(400).json({ error: passwordValidation.error });
     }
 
     // Hole aktuellen User
@@ -386,8 +415,10 @@ const resetPassword = async (req, res) => {
       return res.status(400).json({ error: 'Token und neues Passwort sind erforderlich' });
     }
 
-    if (newPassword.length < 6) {
-      return res.status(400).json({ error: 'Passwort muss mindestens 6 Zeichen lang sein' });
+    // Passwort-Validierung
+    const passwordValidation = validatePassword(newPassword);
+    if (!passwordValidation.valid) {
+      return res.status(400).json({ error: passwordValidation.error });
     }
 
     // Hash den Token für DB-Vergleich

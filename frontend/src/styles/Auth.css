@@ -240,6 +240,32 @@
   color: #5a67d8;
 }
 
+/* Passwort-Anforderungen */
+.password-requirements {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+}
+
+.password-requirements small {
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.requirement-met {
+  color: #4caf50;
+}
+
+.requirement-unmet {
+  color: #999;
+}
+
 /* Responsive Design */
 @media (max-width: 500px) {
   .auth-box {
