@@ -201,7 +201,7 @@ const Home: React.FC = () => {
       </section>
 
       <section className="features-section">
-        <h2 className="section-title">Warum TenFingers?</h2>
+        <h2 className="section-title">Warum TypeHero?</h2>
         <div className="features-grid">
           <div className="feature-card">
             <div className="feature-icon">⌨️</div>
@@ -245,7 +245,7 @@ const Home: React.FC = () => {
         <div className="school-content">
           <h2 className="section-title">Für Schulen und Klassen</h2>
           <p className="section-subtitle">
-            TenFingers ist perfekt für den Einsatz im Informatikunterricht
+            TypeHero ist perfekt für den Einsatz im Informatikunterricht
           </p>
 
           <div className="school-grid">

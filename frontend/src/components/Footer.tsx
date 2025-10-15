@@ -39,7 +39,7 @@ const Footer: React.FC = () => {
     <footer className="footer">
       <div className="footer-content">
         <div className="footer-section">
-          <h3>TenFingers</h3>
+          <h3>TypeHero</h3>
           <p>Kostenloser Tipptrainer für das 10-Finger-System</p>
           <p className="footer-tagline">Ein nicht-gewerbliches Bildungsprojekt</p>
         </div>
@@ -80,7 +80,7 @@ const Footer: React.FC = () => {
 
       <div className="footer-bottom">
         <p>
-          © {currentYear} TenFingers. Alle Rechte vorbehalten.
+          © {currentYear} TypeHero. Alle Rechte vorbehalten.
           {version && (
             <span
               className="version-info"

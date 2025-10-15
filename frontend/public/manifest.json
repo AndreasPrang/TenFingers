@@ -1,6 +1,6 @@
 {
-  "short_name": "TenFingers",
-  "name": "TenFingers - 10-Finger-Schreibtrainer",
+  "short_name": "TypeHero",
+  "name": "TypeHero - 10-Finger-Schreibtrainer",
   "icons": [
     {
       "src": "favicon.svg",
@@ -23,5 +23,5 @@
   "display": "standalone",
   "theme_color": "#667eea",
   "background_color": "#ffffff",
-  "description": "Lerne das 10-Finger-System mit TenFingers - dem interaktiven Schreibtrainer für die deutsche QWERTZ-Tastatur"
+  "description": "Lerne das 10-Finger-System mit TypeHero - dem interaktiven Schreibtrainer für die deutsche QWERTZ-Tastatur"
 }

@@ -4,11 +4,11 @@ const options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'TenFingers API',
+      title: 'TypeHero API',
       version: '1.0.0',
-      description: 'API für den TenFingers 10-Finger-Schreibtrainer',
+      description: 'API für den TypeHero 10-Finger-Schreibtrainer (powered by TenFingers)',
       contact: {
-        name: 'TenFingers Team',
+        name: 'TypeHero Team',
       },
     },
     servers: [

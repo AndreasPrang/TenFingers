@@ -46,7 +46,7 @@ const Navbar: React.FC = () => {
     <nav className="navbar">
       <div className="navbar-container">
         <Link to="/" className="navbar-logo">
-          TenFingers ⌨️
+          TypeHero ⌨️
         </Link>
 
         <div className="navbar-menu">
