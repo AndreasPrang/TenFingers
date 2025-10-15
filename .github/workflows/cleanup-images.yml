@@ -1,0 +1,51 @@
+name: Cleanup Old Container Images
+
+on:
+  schedule:
+    # Runs daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:  # Allow manual trigger
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ${{ github.repository_owner }}/tenfingers
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+
+    steps:
+      - name: Cleanup untagged images
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: 'tenfingers-backend'
+          package-type: 'container'
+          min-versions-to-keep: 3
+          delete-only-untagged-versions: 'true'
+
+      - name: Cleanup untagged frontend images
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: 'tenfingers-frontend'
+          package-type: 'container'
+          min-versions-to-keep: 3
+          delete-only-untagged-versions: 'true'
+
+      - name: Delete old sha-tagged images (backend)
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: 'tenfingers-backend'
+          package-type: 'container'
+          min-versions-to-keep: 5
+          ignore-versions: '^(latest|\\d+\\.\\d+\\.\\d+|\\d+\\.\\d+|\\d+)$'
+
+      - name: Delete old sha-tagged images (frontend)
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: 'tenfingers-frontend'
+          package-type: 'container'
+          min-versions-to-keep: 5
+          ignore-versions: '^(latest|\\d+\\.\\d+\\.\\d+|\\d+\\.\\d+|\\d+)$'
