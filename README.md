@@ -60,34 +60,49 @@ docker-compose up --build
 
 ## VPS-Deployment (Production)
 
-### Automatisches Deployment
+### Automatisches Domain-Setup (Empfohlen) 🚀
 
-Für ein vollautomatisches Deployment auf einem VPS:
-
-```bash
-# Auf dem VPS als root:
-wget https://raw.githubusercontent.com/AndreasPrang/TenFingers/main/deploy.sh
-chmod +x deploy.sh
-sudo ./deploy.sh
-```
-
-### Manuelles Deployment
-
-Detaillierte Anleitung für manuelles Deployment:
+Das einfachste und schnellste Setup mit automatischer SSL-Konfiguration:
 
 ```bash
-# Deployment-Guide anzeigen
-cat DEPLOYMENT.md
+# 1. Repository klonen
+git clone https://github.com/AndreasPrang/TenFingers.git
+cd TenFingers
+
+# 2. Environment-Konfiguration erstellen
+cp .env.production.example .env
+
+# 3. .env anpassen (wichtig!)
+nano .env
+# Setze:
+# - DOMAIN=deine-domain.de
+# - ADMIN_EMAIL=deine@email.de
+# - DB_PASSWORD=sicheres-passwort
+# - JWT_SECRET=langer-geheimer-string
+
+# 4. Setup-Script ausführen (macht alles automatisch!)
+chmod +x setup-domain.sh
+./setup-domain.sh
 ```
 
-Die vollständige Deployment-Dokumentation findest du in [DEPLOYMENT.md](DEPLOYMENT.md)
+**Das Script macht automatisch:**
+- ✅ Generiert Nginx-Konfiguration aus `.env`
+- ✅ Prüft DNS-Einstellungen
+- ✅ Fordert SSL-Zertifikat von Let's Encrypt an
+- ✅ Startet alle Container
+- ✅ Richtet Auto-Renewal für SSL ein
+- ✅ Verifiziert das Deployment
 
 ### Voraussetzungen für Production
 
 - Ubuntu 20.04+ VPS
 - Mindestens 2 GB RAM
-- Domain mit DNS A-Record
-- SSL-Zertifikat (Let's Encrypt)
+- Domain mit DNS A-Record auf Server-IP
+- Ports 80 und 443 offen
+
+### Manuelles Deployment
+
+Detaillierte Anleitung für manuelles Deployment findest du in [DEPLOYMENT.md](DEPLOYMENT.md)
 
 ## Releases & Versionierung
 
