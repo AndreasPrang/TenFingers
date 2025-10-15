@@ -162,9 +162,14 @@ else
     print_info "Contacting Let's Encrypt servers (this may take 30-90 seconds)..."
     echo ""
 
-    # Run certbot with visible output for better feedback
-    # Override entrypoint to run certonly instead of the default renew loop
-    docker-compose -f docker-compose.prod.yml run --rm --entrypoint certbot certbot \
+    # Run certbot directly with docker run instead of docker-compose run
+    # This allows us to explicitly map port 80, which docker-compose run doesn't do
+    docker run --rm -it \
+        --network tenfingers_tenfingers-network \
+        -v tenfingers_certbot_conf:/etc/letsencrypt \
+        -v tenfingers_certbot_www:/var/www/certbot \
+        -p 80:80 \
+        certbot/certbot:latest \
         certonly \
         --standalone \
         --email "$ADMIN_EMAIL" \
