@@ -1,0 +1,20 @@
+# TypeHero - Robots.txt
+# Allow all search engines to crawl the site
+
+User-agent: *
+Allow: /
+
+# Disallow admin and internal pages
+Disallow: /admin
+Disallow: /teacher
+
+# Allow important pages
+Allow: /lessons
+Allow: /register
+Allow: /login
+
+# Sitemap location
+Sitemap: https://typehero.de/sitemap.xml
+
+# Crawl-delay for politeness (optional)
+Crawl-delay: 1
