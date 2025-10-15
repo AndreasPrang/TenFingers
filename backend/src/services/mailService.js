@@ -30,8 +30,9 @@ transporter.verify((error, success) => {
  */
 const sendMail = async ({ to, subject, text, html }) => {
   try {
+    const appName = process.env.APP_NAME || 'TypeHero';
     const mailOptions = {
-      from: `"TenFingers" <${process.env.MAIL_FROM || 'noreply@tenfingers.pra.ng'}>`,
+      from: `"${appName}" <${process.env.MAIL_FROM || 'noreply@typehero.de'}>`,
       to,
       subject,
       text,
@@ -51,28 +52,31 @@ const sendMail = async ({ to, subject, text, html }) => {
  * Sendet Zugangsdaten an einen neuen Schüler
  */
 const sendStudentCredentials = async (email, username, password) => {
-  const subject = 'Deine TenFingers Zugangsdaten';
+  const appName = process.env.APP_NAME || 'TypeHero';
+  const frontendUrl = process.env.FRONTEND_URL || 'https://typehero.de';
+
+  const subject = `Deine ${appName} Zugangsdaten`;
   const text = `
 Hallo ${username},
 
-dein Lehrer hat einen Account für dich bei TenFingers erstellt!
+dein Lehrer hat einen Account für dich bei ${appName} erstellt!
 
 Deine Zugangsdaten:
 Benutzername: ${username}
 Passwort: ${password}
 
-Du kannst dich jetzt unter https://tenfingers.pra.ng anmelden und mit dem Tippen üben!
+Du kannst dich jetzt unter ${frontendUrl} anmelden und mit dem Tippen üben!
 
 Viel Erfolg beim Lernen!
 
 --
-TenFingers - 10-Finger-Schreibtrainer
-https://tenfingers.pra.ng
+${appName} - 10-Finger-Schreibtrainer
+${frontendUrl}
   `.trim();
 
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <h2 style="color: #667eea;">Willkommen bei TenFingers!</h2>
+      <h2 style="color: #667eea;">Willkommen bei ${appName}!</h2>
       <p>Hallo <strong>${username}</strong>,</p>
       <p>dein Lehrer hat einen Account für dich erstellt!</p>
 
@@ -83,7 +87,7 @@ https://tenfingers.pra.ng
 
       <p>Du kannst dich jetzt anmelden und mit dem Tippen üben:</p>
       <p>
-        <a href="https://tenfingers.pra.ng"
+        <a href="${frontendUrl}"
            style="display: inline-block; padding: 12px 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 8px;">
           Jetzt anmelden
         </a>
@@ -92,7 +96,7 @@ https://tenfingers.pra.ng
       <p style="color: #666; font-size: 14px; margin-top: 30px;">
         Viel Erfolg beim Lernen!<br>
         --<br>
-        TenFingers - 10-Finger-Schreibtrainer
+        ${appName} - 10-Finger-Schreibtrainer
       </p>
     </div>
   `;
@@ -104,9 +108,11 @@ https://tenfingers.pra.ng
  * Sendet Passwort-Reset-Link
  */
 const sendPasswordReset = async (email, username, resetToken) => {
-  const resetUrl = `https://tenfingers.pra.ng/reset-password?token=${resetToken}`;
+  const appName = process.env.APP_NAME || 'TypeHero';
+  const frontendUrl = process.env.FRONTEND_URL || 'https://typehero.de';
+  const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}`;
 
-  const subject = 'Passwort zurücksetzen - TenFingers';
+  const subject = `Passwort zurücksetzen - ${appName}`;
   const text = `
 Hallo ${username},
 
@@ -120,8 +126,8 @@ Der Link ist 1 Stunde gültig.
 Falls du kein neues Passwort angefordert hast, ignoriere diese E-Mail.
 
 --
-TenFingers - 10-Finger-Schreibtrainer
-https://tenfingers.pra.ng
+${appName} - 10-Finger-Schreibtrainer
+${frontendUrl}
   `.trim();
 
   const html = `
@@ -144,7 +150,7 @@ https://tenfingers.pra.ng
 
       <p style="color: #666; font-size: 14px; margin-top: 30px;">
         --<br>
-        TenFingers - 10-Finger-Schreibtrainer
+        ${appName} - 10-Finger-Schreibtrainer
       </p>
     </div>
   `;
