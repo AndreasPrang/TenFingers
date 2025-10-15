@@ -37,6 +37,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Get version from git
+        id: version
+        run: |
+          # Get latest tag or use "dev" if no tags
+          VERSION=$(git describe --tags --always --dirty 2>/dev/null || echo "dev")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+
       - name: Extract metadata (tags, labels)
         id: meta
         uses: docker/metadata-action@v5
@@ -63,6 +71,7 @@ jobs:
           cache-to: type=gha,mode=max
           platforms: linux/amd64,linux/arm64
           build-args: |
+            VERSION=${{ steps.version.outputs.version }}
             GIT_COMMIT=${{ github.sha }}
 
   build-frontend:
@@ -85,6 +94,14 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get version from git
+        id: version
+        run: |
+          # Get latest tag or use "dev" if no tags
+          VERSION=$(git describe --tags --always --dirty 2>/dev/null || echo "dev")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
 
       - name: Extract metadata (tags, labels)
         id: meta
@@ -112,5 +129,6 @@ jobs:
           cache-to: type=gha,mode=max
           platforms: linux/amd64,linux/arm64
           build-args: |
+            REACT_APP_VERSION=${{ steps.version.outputs.version }}
             REACT_APP_API_URL=/api
             REACT_APP_GIT_COMMIT=${{ github.sha }}

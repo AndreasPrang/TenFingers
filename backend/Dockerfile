@@ -1,7 +1,9 @@
 FROM node:18-alpine
 
-# Build argument für Git Commit Hash
+# Build arguments
+ARG VERSION=dev
 ARG GIT_COMMIT=unknown
+ENV VERSION=${VERSION}
 ENV GIT_COMMIT=${GIT_COMMIT}
 
 # Installiere curl für healthcheck

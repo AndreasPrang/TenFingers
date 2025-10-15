@@ -46,11 +46,12 @@ app.get('/api-docs.json', (req, res) => {
 
 // Version Endpoint
 app.get('/api/version', (req, res) => {
-  const packageVersion = require('../package.json').version;
+  // Version from environment variable (set during Docker build from Git tags)
+  const version = process.env.VERSION || require('../package.json').version || 'unknown';
   const gitCommit = process.env.GIT_COMMIT || 'unknown';
 
   res.json({
-    version: packageVersion,
+    version: version,
     gitCommit: gitCommit,
     gitCommitShort: gitCommit.substring(0, 7)
   });
@@ -68,7 +69,7 @@ app.get('/api/health', async (req, res) => {
       message: 'TenFingers API läuft',
       timestamp: new Date().toISOString(),
       database: 'connected',
-      version: require('../package.json').version
+      version: process.env.VERSION || require('../package.json').version || 'unknown'
     });
   } catch (error) {
     res.status(503).json({
