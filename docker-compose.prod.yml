@@ -162,7 +162,9 @@ services:
     environment:
       - POSTFIX_myhostname=${DOMAIN}
       # Nur localhost und Docker-Bridge-Netzwerk erlauben
-      - POSTFIX_mynetworks=127.0.0.0/8 172.16.0.0/12
+      - POSTFIX_mynetworks=127.0.0.0/8 172.16.0.0/12 192.168.0.0/16
+      # Erlaube Relay für alle Domains (Open Relay für Docker-Netzwerk)
+      - POSTFIX_smtpd_relay_restrictions=permit_mynetworks,reject
     networks:
       - tenfingers-network
     healthcheck:
