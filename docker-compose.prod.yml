@@ -160,7 +160,7 @@ services:
     container_name: tenfingers-mailserver
     restart: always
     environment:
-      - POSTFIX_myhostname=tenfingers.pra.ng
+      - POSTFIX_myhostname=${DOMAIN}
       # Nur localhost und Docker-Bridge-Netzwerk erlauben
       - POSTFIX_mynetworks=127.0.0.0/8 172.16.0.0/12
     networks:
