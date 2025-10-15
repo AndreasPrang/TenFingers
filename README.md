@@ -2,11 +2,11 @@
 
 Ein professioneller 10-Finger-Schreibtrainer für die deutsche QWERTZ-Tastatur.
 
-## 🚀 Live Demo
+## 🚀 Live-Version
 
-**Jetzt ausprobieren:** [https://typehero.de](https://typehero.de)
+**Direkt nutzen:** [https://typehero.de](https://typehero.de)
 
-Kostenlos, ohne Registrierung, sofort einsatzbereit!
+Die vollwertige Anwendung - kostenlos, ohne Registrierung, sofort einsatzbereit!
 
 ## Features
 
