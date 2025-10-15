@@ -83,3 +83,59 @@ export interface StudentProgress {
   lessons_attempted: number;
   last_practice: string;
 }
+
+export interface Badge {
+  level: number;
+  name: string;
+  icon: string;
+  color: string;
+  minLessons: number;
+  minWpm: number;
+  minAccuracy: number;
+  minLessonAccuracy: number;
+  earned?: boolean;
+  earnedAt?: string | null;
+}
+
+export interface BadgeStats {
+  avgWpm: number;
+  avgAccuracy: number;
+  lessonsCompleted: number;
+  lessonsAbove80: number;
+  lessonsAbove85: number;
+  lessonsAbove90: number;
+  lessonsAbove95: number;
+  lessonsAbove98: number;
+}
+
+export interface CurrentBadgeResponse {
+  currentBadge: Badge | null;
+  nextBadge: Badge | null;
+  stats: BadgeStats;
+}
+
+export interface BadgeRequirement {
+  current: number;
+  required: number;
+  progress: number;
+  met: boolean;
+  description: string;
+}
+
+export interface BadgeProgressResponse {
+  isMaxLevel?: boolean;
+  message?: string;
+  nextBadge?: Badge;
+  requirements?: {
+    lessons: BadgeRequirement;
+    wpm: BadgeRequirement;
+    accuracy: BadgeRequirement;
+  };
+  overallProgress?: number;
+}
+
+export interface UserBadgesResponse {
+  badges: Badge[];
+  earnedCount: number;
+  totalCount: number;
+}

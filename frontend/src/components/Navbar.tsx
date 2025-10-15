@@ -1,12 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { badgesAPI } from '../services/api';
+import { CurrentBadgeResponse } from '../types';
 import '../styles/Navbar.css';
 
 const Navbar: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [currentBadge, setCurrentBadge] = useState<CurrentBadgeResponse | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const handleLogout = () => {
@@ -23,6 +26,22 @@ const Navbar: React.FC = () => {
   const handleAdminClick = () => {
     navigate('/admin');
     setDropdownOpen(false);
+  };
+
+  // Load current badge when user is authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadCurrentBadge();
+    }
+  }, [isAuthenticated]);
+
+  const loadCurrentBadge = async () => {
+    try {
+      const data = await badgesAPI.getCurrentBadge();
+      setCurrentBadge(data);
+    } catch (err) {
+      console.error('Fehler beim Laden des Badges:', err);
+    }
   };
 
   // Close dropdown when clicking outside
@@ -70,6 +89,11 @@ const Navbar: React.FC = () => {
                   className="navbar-username-button"
                   onClick={() => setDropdownOpen(!dropdownOpen)}
                 >
+                  {currentBadge?.currentBadge && (
+                    <span className="navbar-badge-icon" title={currentBadge.currentBadge.name}>
+                      {currentBadge.currentBadge.icon}
+                    </span>
+                  )}
                   <span className="navbar-username">
                     {user?.display_name || user?.username}
                     {user?.role === 'admin' && <span className="user-badge admin">ADMIN</span>}

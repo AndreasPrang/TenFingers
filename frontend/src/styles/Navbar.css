@@ -88,6 +88,19 @@
   transform: translateY(-1px);
 }
 
+.navbar-badge-icon {
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+  transition: transform 0.2s ease;
+}
+
+.navbar-username-button:hover .navbar-badge-icon {
+  transform: scale(1.1);
+}
+
 .navbar-username {
   font-weight: 600;
   font-size: 15px;

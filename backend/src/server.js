@@ -23,6 +23,7 @@ const classesRoutes = require('./routes/classes');
 const practiceRoutes = require('./routes/practice');
 const mailRoutes = require('./routes/mail');
 const adminRoutes = require('./routes/admin');
+const badgeRoutes = require('./routes/badges');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/lessons', lessonsRoutes);
@@ -31,6 +32,7 @@ app.use('/api/classes', classesRoutes);
 app.use('/api/practice', practiceRoutes);
 app.use('/api/mail', mailRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/badges', badgeRoutes);
 
 // Swagger API Dokumentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {

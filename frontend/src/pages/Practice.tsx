@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { lessonsAPI, progressAPI } from '../services/api';
-import { Lesson, TypingStats } from '../types';
+import { lessonsAPI, progressAPI, badgesAPI } from '../services/api';
+import { Lesson, TypingStats, Badge, CurrentBadgeResponse } from '../types';
 import { useAuth } from '../context/AuthContext';
 import Keyboard from '../components/Keyboard';
+import BadgeUnlockModal from '../components/BadgeUnlockModal';
 import '../styles/Practice.css';
 
 const Practice: React.FC = () => {
@@ -22,6 +23,8 @@ const Practice: React.FC = () => {
   const [showError, setShowError] = useState(false);
   const [practiceText, setPracticeText] = useState('');
   const [errorAttempts, setErrorAttempts] = useState(0);
+  const [unlockedBadge, setUnlockedBadge] = useState<Badge | null>(null);
+  const [previousBadgeLevel, setPreviousBadgeLevel] = useState<number>(0);
   const [stats, setStats] = useState<TypingStats>({
     wpm: 0,
     accuracy: 100,
@@ -269,6 +272,16 @@ const Practice: React.FC = () => {
     const completed = finalStats.accuracy >= 80;
 
     try {
+      // Hole aktuelles Badge-Level VOR dem Speichern (nur für eingeloggte User)
+      if (isAuthenticated) {
+        try {
+          const currentBadgeData = await badgesAPI.getCurrentBadge();
+          setPreviousBadgeLevel(currentBadgeData.currentBadge?.level || 0);
+        } catch (err) {
+          console.error('Fehler beim Abrufen des aktuellen Badges:', err);
+        }
+      }
+
       // Speichere Fortschritt für alle (eingeloggte und anonyme Nutzer)
       await progressAPI.saveProgress(
         Number(id),
@@ -277,6 +290,21 @@ const Practice: React.FC = () => {
         completed,
         !isAuthenticated // is_anonymous = true wenn nicht eingeloggt
       );
+
+      // Prüfe nach dem Speichern, ob ein neues Badge erreicht wurde (nur für eingeloggte User)
+      if (isAuthenticated && completed) {
+        try {
+          const updatedBadgeData = await badgesAPI.getCurrentBadge();
+          const newBadgeLevel = updatedBadgeData.currentBadge?.level || 0;
+
+          // Wenn das Badge-Level gestiegen ist, zeige Unlock-Animation
+          if (newBadgeLevel > previousBadgeLevel && updatedBadgeData.currentBadge) {
+            setUnlockedBadge(updatedBadgeData.currentBadge);
+          }
+        } catch (err) {
+          console.error('Fehler beim Prüfen des Badge-Fortschritts:', err);
+        }
+      }
     } catch (err) {
       console.error('Fehler beim Speichern des Fortschritts:', err);
     }
@@ -333,6 +361,13 @@ const Practice: React.FC = () => {
 
   return (
     <div className="practice-container">
+      {unlockedBadge && (
+        <BadgeUnlockModal
+          badge={unlockedBadge}
+          onClose={() => setUnlockedBadge(null)}
+        />
+      )}
+
       <header className="practice-header">
         <button className="btn-back" onClick={() => navigate('/lessons')}>
           ← Zurück zu Lektionen

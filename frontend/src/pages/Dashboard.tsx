@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { progressAPI } from '../services/api';
-import { UserStats, Progress } from '../types';
+import { progressAPI, badgesAPI } from '../services/api';
+import { UserStats, Progress, CurrentBadgeResponse } from '../types';
 import { useNavigate } from 'react-router-dom';
+import Badge from '../components/Badge';
+import BadgeProgress from '../components/BadgeProgress';
 import '../styles/Dashboard.css';
 
 const Dashboard: React.FC = () => {
@@ -10,6 +12,7 @@ const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const [stats, setStats] = useState<UserStats | null>(null);
   const [recentProgress, setRecentProgress] = useState<Progress[]>([]);
+  const [currentBadge, setCurrentBadge] = useState<CurrentBadgeResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -18,12 +21,14 @@ const Dashboard: React.FC = () => {
 
   const loadDashboardData = async () => {
     try {
-      const [statsData, progressData] = await Promise.all([
+      const [statsData, progressData, badgeData] = await Promise.all([
         progressAPI.getUserStats(),
         progressAPI.getUserProgress(),
+        badgesAPI.getCurrentBadge(),
       ]);
       setStats(statsData);
       setRecentProgress(progressData.slice(0, 5)); // Zeige nur die letzten 5
+      setCurrentBadge(badgeData);
     } catch (err) {
       console.error('Fehler beim Laden der Dashboard-Daten:', err);
     } finally {
@@ -45,6 +50,15 @@ const Dashboard: React.FC = () => {
         <h1>Willkommen, {user?.username}!</h1>
         <p>Hier ist dein Fortschritt im Überblick</p>
       </header>
+
+      {currentBadge?.currentBadge && (
+        <div className="dashboard-badge-section">
+          <div className="current-badge-display">
+            <h2>Dein aktuelles Badge</h2>
+            <Badge badge={currentBadge.currentBadge} size="large" showDetails={true} />
+          </div>
+        </div>
+      )}
 
       <div className="dashboard-grid">
         <div className="stats-card">
@@ -75,6 +89,8 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <BadgeProgress />
 
       <div className="recent-activity">
         <h2>Letzte Aktivitäten</h2>

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { AuthResponse, Lesson, Progress, UserStats, Class, Student, StudentProgress } from '../types';
+import { AuthResponse, Lesson, Progress, UserStats, Class, Student, StudentProgress, Badge, CurrentBadgeResponse, BadgeProgressResponse, UserBadgesResponse } from '../types';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
 
@@ -214,6 +214,29 @@ export const adminAPI = {
 
   getAnonymousVsRegisteredComparison: async (): Promise<any> => {
     const response = await api.get('/admin/anonymous-vs-registered');
+    return response.data;
+  },
+};
+
+// Badges API
+export const badgesAPI = {
+  getDefinitions: async (): Promise<Badge[]> => {
+    const response = await api.get('/badges/definitions');
+    return response.data;
+  },
+
+  getCurrentBadge: async (): Promise<CurrentBadgeResponse> => {
+    const response = await api.get('/badges/current');
+    return response.data;
+  },
+
+  getProgress: async (): Promise<BadgeProgressResponse> => {
+    const response = await api.get('/badges/progress');
+    return response.data;
+  },
+
+  getAllBadges: async (): Promise<UserBadgesResponse> => {
+    const response = await api.get('/badges/all');
     return response.data;
   },
 };
