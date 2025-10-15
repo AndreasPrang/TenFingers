@@ -1,6 +1,12 @@
-# TenFingers ⌨️
+# TypeHero ⌨️
 
-Ein interaktiver 10-Finger-Schreibtrainer für die deutsche QWERTZ-Tastatur.
+Ein professioneller 10-Finger-Schreibtrainer für die deutsche QWERTZ-Tastatur.
+
+## 🚀 Live Demo
+
+**Jetzt ausprobieren:** [https://typehero.de](https://typehero.de)
+
+Kostenlos, ohne Registrierung, sofort einsatzbereit!
 
 ## Features
 
