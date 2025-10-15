@@ -197,7 +197,7 @@ const runMigrations = async () => {
     if (checkBadgeLevel.rows.length === 0) {
       await pool.query(`
         ALTER TABLE user_stats
-        ADD COLUMN IF NOT EXISTS current_badge_level INT DEFAULT 1 CHECK (current_badge_level >= 1 AND current_badge_level <= 8),
+        ADD COLUMN IF NOT EXISTS current_badge_level INT DEFAULT 0 CHECK (current_badge_level >= 0 AND current_badge_level <= 8),
         ADD COLUMN IF NOT EXISTS lessons_completed_count INT DEFAULT 0,
         ADD COLUMN IF NOT EXISTS lessons_completed_above_80 INT DEFAULT 0,
         ADD COLUMN IF NOT EXISTS lessons_completed_above_85 INT DEFAULT 0,
@@ -242,7 +242,7 @@ const runMigrations = async () => {
         v_avg_wpm DECIMAL(5,2);
         v_avg_accuracy DECIMAL(5,2);
         v_lessons_completed INT;
-        v_badge_level INT := 1;
+        v_badge_level INT := 0;
       BEGIN
         SELECT
           COALESCE(AVG(wpm), 0),
@@ -319,7 +319,7 @@ const runMigrations = async () => {
         THEN
           v_badge_level := 1;
         ELSE
-          v_badge_level := 1;
+          v_badge_level := 0;
         END IF;
 
         UPDATE user_stats
@@ -443,7 +443,7 @@ const initDatabase = async () => {
         average_wpm DECIMAL(5,2) DEFAULT 0,
         average_accuracy DECIMAL(5,2) DEFAULT 0,
         total_practice_time INTEGER DEFAULT 0,
-        current_badge_level INT DEFAULT 1 CHECK (current_badge_level >= 1 AND current_badge_level <= 8),
+        current_badge_level INT DEFAULT 0 CHECK (current_badge_level >= 0 AND current_badge_level <= 8),
         lessons_completed_count INT DEFAULT 0,
         lessons_completed_above_80 INT DEFAULT 0,
         lessons_completed_above_85 INT DEFAULT 0,
@@ -493,7 +493,7 @@ const initDatabase = async () => {
         v_avg_wpm DECIMAL(5,2);
         v_avg_accuracy DECIMAL(5,2);
         v_lessons_completed INT;
-        v_badge_level INT := 1;
+        v_badge_level INT := 0;
       BEGIN
         -- Berechne Durchschnittswerte aus abgeschlossenen Lektionen
         SELECT
@@ -581,7 +581,7 @@ const initDatabase = async () => {
         THEN
           v_badge_level := 1;
         ELSE
-          v_badge_level := 1;
+          v_badge_level := 0;
         END IF;
 
         -- Update Badge-Level in user_stats

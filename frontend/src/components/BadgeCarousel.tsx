@@ -33,12 +33,31 @@ const BadgeCarousel: React.FC = () => {
     }
   };
 
-  if (loading || !currentBadge?.currentBadge) {
+  if (loading) {
     return null;
   }
 
-  const currentLevel = currentBadge.currentBadge.level;
-  const earned = currentBadge.earnedBadges || [];
+  // Wenn kein Badge vorhanden ist (Level 0), zeige das erste Badge als Ziel
+  const currentLevel = currentBadge?.currentBadge?.level || 0;
+  const earned = currentBadge?.earnedBadges || [];
+
+  // Level 0: Noch kein Badge erreicht
+  if (currentLevel === 0) {
+    const targetBadge = BADGE_DEFINITIONS[0]; // Level 1 Badge als Ziel
+    return (
+      <div className="badge-carousel">
+        <div className="badge-carousel-track">
+          <div className="badge-carousel-item center">
+            <div className="badge-display locked">
+              <div className="badge-icon">{targetBadge.icon}</div>
+              <div className="badge-name">{targetBadge.name}</div>
+              <div className="badge-level">Noch kein Badge erreicht</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Bestimme welche Badges angezeigt werden sollen
   const prevBadge = currentLevel > 1 ? BADGE_DEFINITIONS[currentLevel - 2] : null;
