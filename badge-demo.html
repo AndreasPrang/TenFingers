@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Badge Unlock Demo</title>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .controls {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .controls h1 {
+      margin: 0 0 20px 0;
+      color: #2c3e50;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    button {
+      padding: 15px 30px;
+      font-size: 16px;
+      font-weight: 600;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      color: white;
+    }
+
+    .btn-level-1 { background: linear-gradient(135deg, #cd7f32 0%, #8b5a2b 100%); }
+    .btn-level-2 { background: linear-gradient(135deg, #c0c0c0 0%, #808080 100%); }
+    .btn-level-3 { background: linear-gradient(135deg, #ffd700 0%, #daa520 100%); }
+    .btn-level-4 { background: linear-gradient(135deg, #e5e4e2 0%, #b8b8b8 100%); }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    /* Badge Unlock Modal Styles (aus BadgeUnlockModal.css) */
+    .badge-unlock-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .badge-unlock-overlay.show {
+      display: flex;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .badge-unlock-modal {
+      background: white;
+      border-radius: 20px;
+      max-width: 500px;
+      width: 90%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      animation: slideUp 0.5s ease;
+      overflow: hidden;
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(50px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .badge-unlock-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 30px;
+      text-align: center;
+    }
+
+    .badge-unlock-header h2 {
+      margin: 0;
+      color: white;
+      font-size: 28px;
+      font-weight: 700;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      animation: pulse 1s ease infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    .badge-unlock-content {
+      padding: 40px 30px;
+      text-align: center;
+    }
+
+    .badge-unlock-icon {
+      font-size: 120px;
+      margin-bottom: 20px;
+      animation: bounceIn 0.8s ease;
+      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2));
+    }
+
+    @keyframes bounceIn {
+      0% {
+        transform: scale(0);
+        opacity: 0;
+      }
+      50% {
+        transform: scale(1.2);
+      }
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    .badge-unlock-name {
+      font-size: 32px;
+      font-weight: 700;
+      color: #2c3e50;
+      margin: 0 0 8px 0;
+      animation: fadeInUp 0.6s ease 0.3s both;
+    }
+
+    .badge-unlock-level {
+      font-size: 18px;
+      color: #7f8c8d;
+      margin: 0 0 30px 0;
+      animation: fadeInUp 0.6s ease 0.4s both;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .badge-unlock-requirements {
+      background: #f8f9fa;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 30px;
+      animation: fadeInUp 0.6s ease 0.5s both;
+    }
+
+    .badge-unlock-requirements h4 {
+      margin: 0 0 15px 0;
+      font-size: 16px;
+      color: #34495e;
+      font-weight: 600;
+    }
+
+    .requirement-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .requirement-item {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      font-size: 16px;
+      color: #27ae60;
+      font-weight: 600;
+    }
+
+    .requirement-icon {
+      font-size: 20px;
+    }
+
+    .badge-unlock-close-btn {
+      width: 100%;
+      padding: 16px 32px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      animation: fadeInUp 0.6s ease 0.6s both;
+    }
+
+    .badge-unlock-close-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+    }
+
+    .info {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 600px;
+      text-align: center;
+    }
+
+    .info p {
+      margin: 0;
+      color: #2c3e50;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="controls">
+    <h1>🎮 Badge Unlock Demo</h1>
+    <p style="margin: 0 0 20px 0; color: #7f8c8d;">Klicke auf einen Button, um die Badge-Unlock-Animation zu sehen!</p>
+    <div class="button-group">
+      <button class="btn-level-1" onclick="showBadge(1)">🥉 Level 1: Anfänger</button>
+      <button class="btn-level-2" onclick="showBadge(2)">🥈 Level 2: Schreiber</button>
+      <button class="btn-level-3" onclick="showBadge(3)">🥇 Level 3: Tipper</button>
+      <button class="btn-level-4" onclick="showBadge(4)">💎 Level 4: Schnellschreiber</button>
+    </div>
+  </div>
+
+  <div class="info">
+    <p><strong>💡 Info:</strong> Dies ist eine Demo der Badge-Unlock-Celebration, die im TenFingers-Tipptrainer erscheint, wenn ein Benutzer ein neues Level erreicht. Die Confetti-Animation läuft 3 Sekunden lang von beiden Seiten.</p>
+  </div>
+
+  <!-- Badge Unlock Modal -->
+  <div class="badge-unlock-overlay" id="badgeModal" onclick="closeModal()">
+    <div class="badge-unlock-modal" onclick="event.stopPropagation()">
+      <div class="badge-unlock-header">
+        <h2>🎉 Neues Badge freigeschaltet! 🎉</h2>
+      </div>
+
+      <div class="badge-unlock-content">
+        <div class="badge-unlock-icon" id="badgeIcon"></div>
+        <h3 class="badge-unlock-name" id="badgeName"></h3>
+        <p class="badge-unlock-level" id="badgeLevel"></p>
+
+        <div class="badge-unlock-requirements">
+          <h4>Anforderungen erfüllt:</h4>
+          <div class="requirement-list" id="requirements"></div>
+        </div>
+
+        <button class="badge-unlock-close-btn" onclick="closeModal()">
+          Weiter üben!
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const badges = {
+      1: {
+        name: 'Anfänger',
+        icon: '🥉',
+        minWpm: 10,
+        minAccuracy: 80,
+        minLessons: 3,
+        minLessonAccuracy: 80
+      },
+      2: {
+        name: 'Schreiber',
+        icon: '🥈',
+        minWpm: 20,
+        minAccuracy: 82,
+        minLessons: 5,
+        minLessonAccuracy: 80
+      },
+      3: {
+        name: 'Tipper',
+        icon: '🥇',
+        minWpm: 30,
+        minAccuracy: 85,
+        minLessons: 3,
+        minLessonAccuracy: 85
+      },
+      4: {
+        name: 'Schnellschreiber',
+        icon: '💎',
+        minWpm: 40,
+        minAccuracy: 87,
+        minLessons: 7,
+        minLessonAccuracy: 85
+      }
+    };
+
+    function showBadge(level) {
+      const badge = badges[level];
+
+      // Set badge content
+      document.getElementById('badgeIcon').textContent = badge.icon;
+      document.getElementById('badgeName').textContent = badge.name;
+      document.getElementById('badgeLevel').textContent = `Level ${level}`;
+
+      // Set requirements
+      document.getElementById('requirements').innerHTML = `
+        <div class="requirement-item">
+          <span class="requirement-icon">⚡</span>
+          <span>${badge.minWpm} WPM</span>
+        </div>
+        <div class="requirement-item">
+          <span class="requirement-icon">🎯</span>
+          <span>${badge.minAccuracy}% Genauigkeit</span>
+        </div>
+        <div class="requirement-item">
+          <span class="requirement-icon">📚</span>
+          <span>${badge.minLessons} Lektionen (${badge.minLessonAccuracy}%+)</span>
+        </div>
+      `;
+
+      // Show modal
+      document.getElementById('badgeModal').classList.add('show');
+
+      // Start confetti animation
+      startConfetti();
+    }
+
+    function closeModal() {
+      document.getElementById('badgeModal').classList.remove('show');
+    }
+
+    function startConfetti() {
+      const duration = 3000;
+      const animationEnd = Date.now() + duration;
+      const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 10000 };
+
+      function randomInRange(min, max) {
+        return Math.random() * (max - min) + min;
+      }
+
+      const interval = setInterval(function() {
+        const timeLeft = animationEnd - Date.now();
+
+        if (timeLeft <= 0) {
+          return clearInterval(interval);
+        }
+
+        const particleCount = 50 * (timeLeft / duration);
+
+        // Confetti von links
+        confetti({
+          ...defaults,
+          particleCount,
+          origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
+        });
+
+        // Confetti von rechts
+        confetti({
+          ...defaults,
+          particleCount,
+          origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
+        });
+      }, 250);
+    }
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeModal();
+      }
+    });
+  </script>
+</body>
+</html>
