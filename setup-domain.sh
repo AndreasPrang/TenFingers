@@ -152,13 +152,17 @@ print_header "Step 4: Requesting SSL Certificate"
 
 CERT_PATH="/etc/letsencrypt/live/$DOMAIN"
 
-# Check if certificate already exists
-if docker-compose -f docker-compose.prod.yml run --rm certbot certificates 2>/dev/null | grep -q "$DOMAIN"; then
+# Check if certificate files already exist (simpler check without running certbot)
+print_info "Checking for existing SSL certificate..."
+if docker-compose -f docker-compose.prod.yml run --rm --entrypoint sh certbot -c "test -f /etc/letsencrypt/live/$DOMAIN/fullchain.pem" 2>/dev/null; then
     print_success "SSL certificate for $DOMAIN already exists!"
     print_info "Skipping certificate request..."
 else
     print_info "Requesting new SSL certificate for $DOMAIN..."
+    print_info "Contacting Let's Encrypt servers (this may take 30-90 seconds)..."
+    echo ""
 
+    # Run certbot with visible output for better feedback
     docker-compose -f docker-compose.prod.yml run --rm certbot certonly \
         --standalone \
         --email "$ADMIN_EMAIL" \
@@ -168,11 +172,18 @@ else
         -d "$DOMAIN" \
         -d "www.$DOMAIN"
 
-    if [ $? -eq 0 ]; then
+    CERTBOT_EXIT_CODE=$?
+    echo ""
+
+    if [ $CERTBOT_EXIT_CODE -eq 0 ]; then
         print_success "SSL certificate obtained successfully!"
     else
-        print_error "Failed to obtain SSL certificate!"
-        print_warning "You can try again later or check Let's Encrypt rate limits"
+        print_error "Failed to obtain SSL certificate! (Exit code: $CERTBOT_EXIT_CODE)"
+        print_warning "Possible reasons:"
+        print_warning "  • DNS not properly configured"
+        print_warning "  • Port 80 blocked by firewall"
+        print_warning "  • Let's Encrypt rate limit reached"
+        print_info "Check logs above for details"
         exit 1
     fi
 fi
