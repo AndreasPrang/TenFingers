@@ -163,7 +163,9 @@ else
     echo ""
 
     # Run certbot with visible output for better feedback
-    docker-compose -f docker-compose.prod.yml run --rm certbot certonly \
+    # Override entrypoint to run certonly instead of the default renew loop
+    docker-compose -f docker-compose.prod.yml run --rm --entrypoint certbot certbot \
+        certonly \
         --standalone \
         --email "$ADMIN_EMAIL" \
         --agree-tos \
