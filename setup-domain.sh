@@ -140,8 +140,8 @@ fi
 
 print_header "Step 3: Stopping Services"
 
-print_info "Stopping nginx and frontend to free port 80..."
-docker-compose -f docker-compose.prod.yml stop nginx frontend 2>/dev/null || true
+print_info "Stopping nginx, frontend, and certbot to free port 80..."
+docker-compose -f docker-compose.prod.yml stop nginx frontend certbot 2>/dev/null || true
 print_success "Services stopped"
 
 ##############################################################################
