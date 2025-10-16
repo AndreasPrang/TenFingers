@@ -4,7 +4,7 @@
 # HTTP Server - Redirect to HTTPS
 server {
     listen 80;
-    listen [::]:80;
+    # listen [::]:80;  # IPv6 disabled - causes issues with some crawlers (LinkedIn)
     server_name {{DOMAIN}} www.{{DOMAIN}};
 
     # Let's Encrypt ACME Challenge
@@ -21,7 +21,7 @@ server {
 # HTTPS Server
 server {
     listen 443 ssl http2;
-    listen [::]:443 ssl http2;
+    # listen [::]:443 ssl http2;  # IPv6 disabled - causes issues with some crawlers (LinkedIn)
     server_name {{DOMAIN}} www.{{DOMAIN}};
 
     # SSL Configuration
