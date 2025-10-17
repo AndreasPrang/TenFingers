@@ -33,7 +33,9 @@ const getDefaultLessons = () => {
       description: 'Übe mit 110 verschiedenen jugendgerechten Sätzen - bei jedem Start wird ein zufälliger Text ausgewählt!',
       level: 0,
       text_content: homePracticeTexts.join('|'),
-      target_keys: 'alle'
+      target_keys: 'alle',
+      lesson_type: 'normal',
+      is_extra: true
     },
     {
       title: 'Grundreihe - ASDF JKL',
@@ -112,7 +114,8 @@ const getDefaultLessons = () => {
       level: 11,
       text_content: 'asdfghjkl',
       target_keys: 'asdfghjkl',
-      lesson_type: 'runner'
+      lesson_type: 'runner',
+      is_extra: true
     }
   ];
 };
@@ -258,6 +261,29 @@ const runMigrations = async () => {
       console.log('✓ Migration: lesson_type zu lessons hinzugefügt');
     }
 
+    // Migration: Füge is_extra zu lessons hinzu, falls nicht vorhanden
+    const checkIsExtra = await pool.query(`
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_name='lessons' AND column_name='is_extra'
+    `);
+
+    if (checkIsExtra.rows.length === 0) {
+      await pool.query(`
+        ALTER TABLE lessons
+        ADD COLUMN is_extra BOOLEAN DEFAULT FALSE
+      `);
+      console.log('✓ Migration: is_extra zu lessons hinzugefügt');
+
+      // Markiere die Extra-Lektionen (Freies Training = level 0, Tastatur-Runner = level 11)
+      await pool.query(`
+        UPDATE lessons
+        SET is_extra = TRUE
+        WHERE level IN (0, 11)
+      `);
+      console.log('✓ Migration: Extra-Lektionen markiert (level 0 und 11)');
+    }
+
     // Migration: Badge-Berechnungs-Funktion erstellen/aktualisieren
     await pool.query(`
       CREATE OR REPLACE FUNCTION calculate_user_badge_level(p_user_id INT)
@@ -387,8 +413,8 @@ const syncDefaultLessons = async () => {
     for (const lesson of defaultLessons) {
       if (!existingLevels.has(lesson.level)) {
         await pool.query(
-          'INSERT INTO lessons (title, description, level, text_content, target_keys, lesson_type) VALUES ($1, $2, $3, $4, $5, $6)',
-          [lesson.title, lesson.description, lesson.level, lesson.text_content, lesson.target_keys, lesson.lesson_type || 'normal']
+          'INSERT INTO lessons (title, description, level, text_content, target_keys, lesson_type, is_extra) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+          [lesson.title, lesson.description, lesson.level, lesson.text_content, lesson.target_keys, lesson.lesson_type || 'normal', lesson.is_extra || false]
         );
         addedCount++;
         console.log(`✓ Lektion ${lesson.level} hinzugefügt: ${lesson.title}`);
@@ -440,6 +466,7 @@ const initDatabase = async () => {
         text_content TEXT NOT NULL,
         target_keys VARCHAR(50),
         lesson_type VARCHAR(20) DEFAULT 'normal',
+        is_extra BOOLEAN DEFAULT FALSE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
@@ -651,8 +678,8 @@ const insertDefaultLessons = async () => {
 
   for (const lesson of lessons) {
     await pool.query(
-      'INSERT INTO lessons (title, description, level, text_content, target_keys, lesson_type) VALUES ($1, $2, $3, $4, $5, $6)',
-      [lesson.title, lesson.description, lesson.level, lesson.text_content, lesson.target_keys, lesson.lesson_type || 'normal']
+      'INSERT INTO lessons (title, description, level, text_content, target_keys, lesson_type, is_extra) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+      [lesson.title, lesson.description, lesson.level, lesson.text_content, lesson.target_keys, lesson.lesson_type || 'normal', lesson.is_extra || false]
     );
   }
 
