@@ -388,17 +388,17 @@ const RunnerGame: React.FC<RunnerGameProps> = ({ targetKeys, highscore, onGameOv
         state.nextObstacleIn = minSpacing + Math.random() * (maxSpacing - minSpacing);
       }
 
-      // Vögel spawnen (selten - ca alle 5-10 Sekunden bei 60 FPS)
+      // Vögel spawnen (ca alle 3-7 Sekunden bei 60 FPS)
       state.nextBirdIn--;
       if (state.nextBirdIn <= 0) {
         const bird: Bird = {
           x: CANVAS_WIDTH,
-          y: 80 + Math.random() * 150, // Zufällige Höhe im Himmel (80-230px)
+          y: 50 + Math.random() * 200, // Zufällige Höhe im Himmel (50-250px)
           wingFrame: 0,
         };
         state.birds.push(bird);
-        // Nächster Vogel in 300-600 Frames (5-10 Sekunden bei 60 FPS)
-        state.nextBirdIn = 300 + Math.random() * 300;
+        // Nächster Vogel in 180-420 Frames (3-7 Sekunden bei 60 FPS)
+        state.nextBirdIn = 180 + Math.random() * 240;
       }
 
       // Vögel zeichnen und bewegen
@@ -675,7 +675,7 @@ const RunnerGame: React.FC<RunnerGameProps> = ({ targetKeys, highscore, onGameOv
     // Initialisierung
     gameStateRef.current.playerY = GROUND_Y - PLAYER_SIZE;
     gameStateRef.current.nextObstacleIn = 150;
-    gameStateRef.current.nextBirdIn = 180 + Math.random() * 300; // Erster Vogel nach 3-8 Sekunden
+    gameStateRef.current.nextBirdIn = 60 + Math.random() * 120; // Erster Vogel nach 1-3 Sekunden
     gameStateRef.current.lastFrameTime = 0; // Reset delta-time
 
     animationFrameId = requestAnimationFrame(gameLoop);
