@@ -71,8 +71,13 @@ const RunnerGame: React.FC<RunnerGameProps> = ({ targetKeys, onGameOver }) => {
   // Tasteneingabe Handler
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
+      // Verhindere Browser-Scroll bei Leertaste
+      if (e.key === ' ' || e.key === 'Spacebar') {
+        e.preventDefault();
+      }
+
       if (!gameStarted || gameStateRef.current.gameOver) {
-        if (e.key === ' ') {
+        if (e.key === ' ' || e.key === 'Spacebar') {
           setGameStarted(true);
           gameStateRef.current.gameOver = false;
         }
@@ -83,12 +88,13 @@ const RunnerGame: React.FC<RunnerGameProps> = ({ targetKeys, onGameOver }) => {
       const state = gameStateRef.current;
 
       // Finde das nächste Hindernis mit passendem Buchstaben (exakte Übereinstimmung)
+      // KEINE Distanzbeschränkung mehr - lass immer springen!
       const nextObstacle = state.obstacles.find(
-        obs => !obs.passed && obs.letter === pressedKey && obs.x < PLAYER_X + 200
+        obs => !obs.passed && obs.letter === pressedKey
       );
 
       if (nextObstacle && !state.isJumping) {
-        // Richtiger Buchstabe zur richtigen Zeit - Sprung!
+        // Richtiger Buchstabe - Spring!
         state.isJumping = true;
         state.playerVelocity = JUMP_STRENGTH;
         state.correctPresses++;
@@ -129,15 +135,64 @@ const RunnerGame: React.FC<RunnerGameProps> = ({ targetKeys, onGameOver }) => {
       ctx.fillStyle = '#8B4513';
       ctx.fillRect(0, GROUND_Y, CANVAS_WIDTH, CANVAS_HEIGHT - GROUND_Y);
 
-      // Spieler (Quadrat)
-      ctx.fillStyle = '#FFD700';
-      ctx.fillRect(PLAYER_X, state.playerY, PLAYER_SIZE, PLAYER_SIZE);
+      // Dino zeichnen (Chrome-Dino Style)
+      const dinoX = PLAYER_X;
+      const dinoY = state.playerY;
+      const legAnimation = Math.floor(state.frameCount / 8) % 2; // Bein-Animation alle 8 Frames
 
-      // Spieler Gesicht
-      ctx.fillStyle = '#000';
-      ctx.fillRect(PLAYER_X + 10, state.playerY + 10, 5, 5); // Linkes Auge
-      ctx.fillRect(PLAYER_X + 25, state.playerY + 10, 5, 5); // Rechtes Auge
-      ctx.fillRect(PLAYER_X + 10, state.playerY + 25, 20, 3); // Mund
+      ctx.fillStyle = '#535353'; // Dunkelgrau wie Chrome Dino
+
+      // Hinterbeine (2 Beine mit Animation)
+      if (state.isJumping) {
+        // Im Sprung: Beide Beine nach hinten
+        ctx.fillRect(dinoX + 22, dinoY + 26, 4, 12);
+        ctx.fillRect(dinoX + 18, dinoY + 26, 4, 12);
+      } else {
+        // Beim Laufen: Alternierende Beine
+        if (legAnimation === 0) {
+          ctx.fillRect(dinoX + 22, dinoY + 26, 4, 12); // Rechtes Bein unten
+          ctx.fillRect(dinoX + 18, dinoY + 22, 4, 12); // Linkes Bein angehoben
+        } else {
+          ctx.fillRect(dinoX + 18, dinoY + 26, 4, 12); // Linkes Bein unten
+          ctx.fillRect(dinoX + 22, dinoY + 22, 4, 12); // Rechtes Bein angehoben
+        }
+      }
+
+      // Körper (Hauptteil)
+      ctx.fillRect(dinoX + 10, dinoY + 12, 22, 16);
+
+      // Hals
+      ctx.fillRect(dinoX + 26, dinoY + 4, 6, 12);
+
+      // Kopf
+      ctx.fillRect(dinoX + 26, dinoY, 16, 10);
+
+      // Schnauze
+      ctx.fillRect(dinoX + 38, dinoY + 4, 6, 6);
+
+      // Schwanz
+      ctx.fillRect(dinoX + 2, dinoY + 14, 10, 8);
+      ctx.fillRect(dinoX, dinoY + 18, 4, 4);
+
+      // Auge (weiß mit schwarzer Pupille)
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(dinoX + 30, dinoY + 2, 4, 4);
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(dinoX + 32, dinoY + 3, 2, 2);
+
+      // Mund (kleine Linie)
+      ctx.fillStyle = '#535353';
+      ctx.fillRect(dinoX + 40, dinoY + 8, 2, 1);
+
+      // Vorderbeine (kurze T-Rex Arme)
+      ctx.fillStyle = '#535353';
+      ctx.fillRect(dinoX + 18, dinoY + 16, 3, 6);
+      ctx.fillRect(dinoX + 24, dinoY + 16, 3, 6);
+
+      // Rückenzacken (3 Zacken)
+      ctx.fillRect(dinoX + 14, dinoY + 10, 2, 4);
+      ctx.fillRect(dinoX + 18, dinoY + 8, 2, 4);
+      ctx.fillRect(dinoX + 22, dinoY + 10, 2, 4);
 
       // Spieler Physik
       if (state.isJumping || state.playerY < GROUND_Y - PLAYER_SIZE) {
@@ -188,37 +243,41 @@ const RunnerGame: React.FC<RunnerGameProps> = ({ targetKeys, onGameOver }) => {
           obstacle.y + obstacle.height / 2
         );
 
-        // Kollisionserkennung
+        // Kollisionserkennung und erfolgreiches Überspringen
         const playerBottom = state.playerY + PLAYER_SIZE;
         const playerRight = PLAYER_X + PLAYER_SIZE;
         const obstacleRight = obstacle.x + obstacle.width;
 
-        if (
-          PLAYER_X < obstacleRight &&
-          playerRight > obstacle.x &&
-          state.playerY < obstacle.y + obstacle.height &&
-          playerBottom > obstacle.y
-        ) {
-          // Kollision! Leben verlieren
+        // Wenn der Spieler horizontal mit dem Hindernis überlappt
+        if (PLAYER_X < obstacleRight && playerRight > obstacle.x) {
           if (!obstacle.passed) {
-            obstacle.passed = true;
-            state.missedObstacles++;
-            setLives(prev => {
-              const newLives = prev - 1;
-              if (newLives <= 0) {
-                state.gameOver = true;
-                onGameOver({
-                  correctPresses: state.correctPresses,
-                  missedObstacles: state.missedObstacles,
-                  totalObstacles: state.totalObstacles,
-                });
-              }
-              return newLives;
-            });
+            // Prüfe ob Spieler hoch genug springt (mindestens 20px über Hindernis)
+            const clearanceNeeded = obstacle.y - 20;
+
+            if (state.playerY <= clearanceNeeded) {
+              // Erfolgreich übersprungen! Hindernis passiert ohne Kollision
+              obstacle.passed = true;
+            } else if (playerBottom > obstacle.y) {
+              // Zu niedrig - Kollision!
+              obstacle.passed = true;
+              state.missedObstacles++;
+              setLives(prev => {
+                const newLives = prev - 1;
+                if (newLives <= 0) {
+                  state.gameOver = true;
+                  onGameOver({
+                    correctPresses: state.correctPresses,
+                    missedObstacles: state.missedObstacles,
+                    totalObstacles: state.totalObstacles,
+                  });
+                }
+                return newLives;
+              });
+            }
           }
         }
 
-        // Hindernis als "verpasst" markieren wenn Spieler vorbei ist
+        // Hindernis als "verpasst" markieren wenn Spieler vorbei ist (ohne zu springen)
         if (!obstacle.passed && obstacle.x + obstacle.width < PLAYER_X) {
           obstacle.passed = true;
           state.missedObstacles++;
