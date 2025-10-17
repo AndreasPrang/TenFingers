@@ -19,6 +19,13 @@ interface Bird {
   wingFrame: number; // 0 oder 1 für Flügelschlag-Animation
 }
 
+interface Cloud {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 interface RunnerGameProps {
   targetKeys: string;
   highscore?: { wpm: number; accuracy: number } | null;
@@ -38,6 +45,7 @@ const RunnerGame: React.FC<RunnerGameProps> = ({ targetKeys, highscore, onGameOv
     isJumping: false,
     obstacles: [] as Obstacle[],
     birds: [] as Bird[],
+    clouds: [] as Cloud[],
     gameSpeed: 4.5,
     frameCount: 0,
     correctPresses: 0,
@@ -46,6 +54,7 @@ const RunnerGame: React.FC<RunnerGameProps> = ({ targetKeys, highscore, onGameOv
     gameOver: false,
     nextObstacleIn: 0,
     nextBirdIn: 0,
+    nextCloudIn: 0,
     difficultyLevel: 0,
     startTime: 0,
     pointsPerJump: 10, // Dynamische Punkte pro Sprung
@@ -245,6 +254,29 @@ const RunnerGame: React.FC<RunnerGameProps> = ({ targetKeys, highscore, onGameOv
     ctx.fillRect(birdX, birdY + 10, 12, 4);
   };
 
+  // Hilfsfunktion zum Zeichnen einer Wolke (leicht transparent)
+  const drawCloud = (ctx: CanvasRenderingContext2D, cloudX: number, cloudY: number, width: number, height: number) => {
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)'; // Leicht transparentes Weiß
+
+    // Wolke aus mehreren überlappenden Kreisen/Ellipsen (pixelig mit Rechtecken)
+    const baseHeight = height * 0.6;
+    const topHeight = height * 0.4;
+
+    // Untere Basis
+    ctx.fillRect(cloudX + width * 0.2, cloudY + topHeight, width * 0.6, baseHeight);
+
+    // Linke Rundung
+    ctx.fillRect(cloudX + width * 0.1, cloudY + topHeight + baseHeight * 0.2, width * 0.2, baseHeight * 0.6);
+
+    // Rechte Rundung
+    ctx.fillRect(cloudX + width * 0.7, cloudY + topHeight + baseHeight * 0.2, width * 0.2, baseHeight * 0.6);
+
+    // Obere Hügel (3 Beulen)
+    ctx.fillRect(cloudX + width * 0.2, cloudY + topHeight * 0.3, width * 0.2, topHeight * 0.7);
+    ctx.fillRect(cloudX + width * 0.4, cloudY, width * 0.2, topHeight);
+    ctx.fillRect(cloudX + width * 0.6, cloudY + topHeight * 0.4, width * 0.2, topHeight * 0.6);
+  };
+
   // Start Screen
   useEffect(() => {
     if (gameStarted) return;
@@ -388,7 +420,7 @@ const RunnerGame: React.FC<RunnerGameProps> = ({ targetKeys, highscore, onGameOv
         state.nextObstacleIn = minSpacing + Math.random() * (maxSpacing - minSpacing);
       }
 
-      // Vögel spawnen (ca alle 3-7 Sekunden bei 60 FPS)
+      // Vögel spawnen (ca alle 8-15 Sekunden bei 60 FPS)
       state.nextBirdIn--;
       if (state.nextBirdIn <= 0) {
         const bird: Bird = {
@@ -397,8 +429,22 @@ const RunnerGame: React.FC<RunnerGameProps> = ({ targetKeys, highscore, onGameOv
           wingFrame: 0,
         };
         state.birds.push(bird);
-        // Nächster Vogel in 180-420 Frames (3-7 Sekunden bei 60 FPS)
-        state.nextBirdIn = 180 + Math.random() * 240;
+        // Nächster Vogel in 480-900 Frames (8-15 Sekunden bei 60 FPS)
+        state.nextBirdIn = 480 + Math.random() * 420;
+      }
+
+      // Wolken spawnen (ca alle 5-10 Sekunden bei 60 FPS)
+      state.nextCloudIn--;
+      if (state.nextCloudIn <= 0) {
+        const cloud: Cloud = {
+          x: CANVAS_WIDTH,
+          y: 40 + Math.random() * 120, // Zufällige Höhe im Himmel (40-160px)
+          width: 80 + Math.random() * 60, // Zufällige Breite (80-140px)
+          height: 30 + Math.random() * 20, // Zufällige Höhe (30-50px)
+        };
+        state.clouds.push(cloud);
+        // Nächste Wolke in 300-600 Frames (5-10 Sekunden bei 60 FPS)
+        state.nextCloudIn = 300 + Math.random() * 300;
       }
 
       // Vögel zeichnen und bewegen
@@ -414,6 +460,19 @@ const RunnerGame: React.FC<RunnerGameProps> = ({ targetKeys, highscore, onGameOv
         // Entferne Vögel die aus dem Bildschirm sind
         if (bird.x + 42 < 0) { // 42 ist die ungefähre Breite des Vogels
           state.birds.splice(index, 1);
+        }
+      });
+
+      // Wolken zeichnen und bewegen (VOR den Vögeln, damit sie über den Vögeln erscheinen)
+      state.clouds.forEach((cloud, index) => {
+        // Wolken bewegen sich noch langsamer als Vögel (ein Viertel der Geschwindigkeit)
+        cloud.x -= state.gameSpeed * 0.25;
+
+        drawCloud(ctx, cloud.x, cloud.y, cloud.width, cloud.height);
+
+        // Entferne Wolken die aus dem Bildschirm sind
+        if (cloud.x + cloud.width < 0) {
+          state.clouds.splice(index, 1);
         }
       });
 
@@ -675,7 +734,8 @@ const RunnerGame: React.FC<RunnerGameProps> = ({ targetKeys, highscore, onGameOv
     // Initialisierung
     gameStateRef.current.playerY = GROUND_Y - PLAYER_SIZE;
     gameStateRef.current.nextObstacleIn = 150;
-    gameStateRef.current.nextBirdIn = 60 + Math.random() * 120; // Erster Vogel nach 1-3 Sekunden
+    gameStateRef.current.nextBirdIn = 300 + Math.random() * 300; // Erster Vogel nach 5-10 Sekunden
+    gameStateRef.current.nextCloudIn = 60 + Math.random() * 120; // Erste Wolke nach 1-3 Sekunden
     gameStateRef.current.lastFrameTime = 0; // Reset delta-time
 
     animationFrameId = requestAnimationFrame(gameLoop);
