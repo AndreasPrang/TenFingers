@@ -35,6 +35,7 @@ const Practice: React.FC = () => {
     incorrectChars: 0,
     totalChars: 0,
   });
+  const [gameKey, setGameKey] = useState(0);
 
   const startTime = useRef<number>(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -60,6 +61,32 @@ const Practice: React.FC = () => {
     loadLesson();
   }, [id]);
 
+  // Lade Highscore wenn sich Auth-Status ändert
+  useEffect(() => {
+    const loadHighscoreForAuth = async () => {
+      if (isAuthenticated && id && !loading) {
+        try {
+          const highscoreData = await progressAPI.getLessonHighscore(Number(id));
+          console.log('🔄 Highscore reload on auth change:', highscoreData);
+          if (highscoreData.hasHighscore && highscoreData.highscore) {
+            console.log('✅ Setze Highscore nach Auth-Change:', highscoreData.highscore);
+            setHighscore({
+              wpm: highscoreData.highscore.wpm,
+              accuracy: highscoreData.highscore.accuracy
+            });
+          } else {
+            console.log('❌ Kein Highscore nach Auth-Change');
+            setHighscore(null);
+          }
+        } catch (err) {
+          console.error('Fehler beim Laden des Highscores nach Auth-Change:', err);
+        }
+      }
+    };
+
+    loadHighscoreForAuth();
+  }, [isAuthenticated, id, loading]);
+
   // Auto-start nach dem Laden der Lektion
   useEffect(() => {
     if (lesson && !started && !finished) {
@@ -76,10 +103,40 @@ const Practice: React.FC = () => {
   useEffect(() => {
     if (!finished) return;
 
-    const handleKeyPress = (e: KeyboardEvent) => {
+    const handleKeyPress = async (e: KeyboardEvent) => {
       if (e.key === ' ' || e.key === 'Spacebar') {
         e.preventDefault();
-        handleStart();
+
+        // Runner-Modus: Reset mit gameKey und Highscore-Reload
+        if (lesson && lesson.lesson_type === 'runner') {
+          setFinished(false);
+          setNewHighscore(null);
+
+          // Lade Highscore neu, um sicherzustellen, dass er aktuell ist
+          if (isAuthenticated) {
+            try {
+              const highscoreData = await progressAPI.getLessonHighscore(Number(id));
+              console.log('🔄 Highscore RELOAD (Spacebar) für Lektion', id, ':', highscoreData);
+              if (highscoreData.hasHighscore && highscoreData.highscore) {
+                console.log('✅ Setze Highscore nach Reload:', highscoreData.highscore);
+                setHighscore({
+                  wpm: highscoreData.highscore.wpm,
+                  accuracy: highscoreData.highscore.accuracy
+                });
+              } else {
+                console.log('❌ Kein Highscore nach Reload, setze auf null');
+                setHighscore(null);
+              }
+            } catch (err) {
+              console.error('Fehler beim Laden des Highscores:', err);
+            }
+          }
+
+          setGameKey(prev => prev + 1); // Erhöhe Key, um RunnerGame neu zu mounten
+        } else {
+          // Normaler Modus: Verwende handleStart
+          handleStart();
+        }
       } else if (e.key === 'Enter') {
         e.preventDefault();
         const nextLesson = getNextLesson();
@@ -93,7 +150,7 @@ const Practice: React.FC = () => {
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [finished]);
+  }, [finished, lesson, isAuthenticated, id]);
 
   const loadLesson = async () => {
     try {
@@ -108,11 +165,16 @@ const Practice: React.FC = () => {
       if (isAuthenticated) {
         try {
           const highscoreData = await progressAPI.getLessonHighscore(Number(id));
+          console.log('📊 Highscore geladen für Lektion', id, ':', highscoreData);
           if (highscoreData.hasHighscore && highscoreData.highscore) {
+            console.log('✅ Setze Highscore:', highscoreData.highscore);
             setHighscore({
               wpm: highscoreData.highscore.wpm,
               accuracy: highscoreData.highscore.accuracy
             });
+          } else {
+            console.log('❌ Kein Highscore vorhanden, setze auf null');
+            setHighscore(null);
           }
         } catch (err) {
           console.error('Fehler beim Laden des Highscores:', err);
@@ -376,15 +438,13 @@ const Practice: React.FC = () => {
   const displayText = getDisplayText();
 
   // Handler für Runner-Game-Over
-  const handleRunnerGameOver = async (gameStats: { correctPresses: number; missedObstacles: number; totalObstacles: number; elapsedTimeMs: number }) => {
+  const handleRunnerGameOver = async (gameStats: { correctPresses: number; missedObstacles: number; totalObstacles: number; elapsedTimeMs: number; score: number }) => {
     const accuracy = gameStats.totalObstacles > 0
       ? (gameStats.correctPresses / gameStats.totalObstacles) * 100
       : 0;
 
-    // WPM berechnen basierend auf tatsächlicher Zeit
-    const elapsedMinutes = gameStats.elapsedTimeMs / 60000;
-    const words = gameStats.correctPresses / 5; // Standard: 5 Zeichen = 1 Wort
-    const wpm = elapsedMinutes > 0 ? words / elapsedMinutes : 0;
+    // Verwende Score als primäre Metrik (statt WPM)
+    const wpm = gameStats.score; // Score wird als "WPM" für die Highscore-Logik verwendet
 
     const finalStats: TypingStats = {
       wpm,
@@ -397,14 +457,39 @@ const Practice: React.FC = () => {
     setStats(finalStats);
 
     // Prüfe ob neuer Highscore erreicht wurde (nur für eingeloggte User)
-    if (isAuthenticated && highscore && wpm > highscore.wpm) {
-      setNewHighscore({
-        newWpm: wpm,
-        oldWpm: highscore.wpm,
-        accuracy
+    // Verwende Score statt WPM für Vergleich - feiere jeden Score im Runner-Modus!
+    if (isAuthenticated) {
+      console.log('🎮 Highscore Check:', {
+        currentScore: gameStats.score,
+        existingHighscore: highscore?.wpm,
+        hasHighscore: !!highscore
       });
-      // Update Highscore
-      setHighscore({ wpm, accuracy });
+
+      if (highscore) {
+        // Bestehender Highscore - prüfe ob übertroffen
+        if (gameStats.score > highscore.wpm) {
+          console.log('🎉 NEUER HIGHSCORE!', gameStats.score, '>', highscore.wpm);
+          setNewHighscore({
+            newWpm: gameStats.score,
+            oldWpm: highscore.wpm,
+            accuracy
+          });
+          // Update Highscore
+          setHighscore({ wpm: gameStats.score, accuracy });
+        } else {
+          console.log('❌ Kein neuer Highscore:', gameStats.score, '<=', highscore.wpm);
+        }
+      } else {
+        // Erster Versuch - feiere!
+        console.log('🎉 ERSTER VERSUCH - Feiere!', gameStats.score);
+        setNewHighscore({
+          newWpm: gameStats.score,
+          oldWpm: 0,
+          accuracy
+        });
+        // Setze initialen Highscore
+        setHighscore({ wpm: gameStats.score, accuracy });
+      }
     }
 
     finishPractice(finalStats);
@@ -441,6 +526,7 @@ const Practice: React.FC = () => {
         </header>
 
         <RunnerGame
+          key={gameKey}
           targetKeys={lesson.target_keys}
           highscore={highscore}
           onGameOver={handleRunnerGameOver}
@@ -452,8 +538,8 @@ const Practice: React.FC = () => {
               <h2>Spiel beendet!</h2>
               <div className="result-stats">
                 <div className="result-stat">
-                  <div className="result-stat-label">Geschwindigkeit</div>
-                  <div className="result-stat-value">{stats.wpm.toFixed(1)} WPM</div>
+                  <div className="result-stat-label">Score</div>
+                  <div className="result-stat-value">{Math.round(stats.wpm)}</div>
                 </div>
                 <div className="result-stat">
                   <div className="result-stat-label">Genauigkeit</div>
@@ -488,7 +574,32 @@ const Practice: React.FC = () => {
                     Jetzt registrieren
                   </button>
                 )}
-                <button className="btn-retry" onClick={() => window.location.reload()}>
+                <button className="btn-retry" onClick={async () => {
+                  setFinished(false);
+                  setNewHighscore(null);
+
+                  // Lade Highscore neu, um sicherzustellen, dass er aktuell ist
+                  if (isAuthenticated) {
+                    try {
+                      const highscoreData = await progressAPI.getLessonHighscore(Number(id));
+                      console.log('🔄 Highscore RELOAD (Button) für Lektion', id, ':', highscoreData);
+                      if (highscoreData.hasHighscore && highscoreData.highscore) {
+                        console.log('✅ Setze Highscore nach Reload:', highscoreData.highscore);
+                        setHighscore({
+                          wpm: highscoreData.highscore.wpm,
+                          accuracy: highscoreData.highscore.accuracy
+                        });
+                      } else {
+                        console.log('❌ Kein Highscore nach Reload, setze auf null');
+                        setHighscore(null);
+                      }
+                    } catch (err) {
+                      console.error('Fehler beim Laden des Highscores:', err);
+                    }
+                  }
+
+                  setGameKey(prev => prev + 1); // Erhöhe Key, um RunnerGame neu zu mounten
+                }}>
                   Nochmal versuchen
                 </button>
                 {getNextLesson() ? (
