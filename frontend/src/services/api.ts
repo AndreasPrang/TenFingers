@@ -111,6 +111,11 @@ export const progressAPI = {
     const response = await api.get('/progress/stats');
     return response.data;
   },
+
+  getLessonHighscore: async (lessonId: number): Promise<{ hasHighscore: boolean; highscore?: { wpm: number; accuracy: number; completed: boolean; completed_at: string } }> => {
+    const response = await api.get(`/progress/lesson/${lessonId}/highscore`);
+    return response.data;
+  },
 };
 
 // Classes API (nur für Lehrer)

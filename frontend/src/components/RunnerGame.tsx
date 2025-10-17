@@ -8,14 +8,16 @@ interface Obstacle {
   height: number;
   letter: string;
   passed: boolean;
+  cactusType: number; // 0, 1, oder 2 für verschiedene Kaktus-Arten
 }
 
 interface RunnerGameProps {
   targetKeys: string;
-  onGameOver: (stats: { correctPresses: number; missedObstacles: number; totalObstacles: number }) => void;
+  highscore?: { wpm: number; accuracy: number } | null;
+  onGameOver: (stats: { correctPresses: number; missedObstacles: number; totalObstacles: number; elapsedTimeMs: number }) => void;
 }
 
-const RunnerGame: React.FC<RunnerGameProps> = ({ targetKeys, onGameOver }) => {
+const RunnerGame: React.FC<RunnerGameProps> = ({ targetKeys, highscore, onGameOver }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [gameStarted, setGameStarted] = useState(false);
   const [score, setScore] = useState(0);
@@ -34,7 +36,9 @@ const RunnerGame: React.FC<RunnerGameProps> = ({ targetKeys, onGameOver }) => {
     totalObstacles: 0,
     gameOver: false,
     nextObstacleIn: 0,
-    difficultyLevel: 0, // 0 = nur Kleinbuchstaben, 1+ = mit Großbuchstaben gemischt
+    difficultyLevel: 0,
+    startTime: 0,
+    pointsPerJump: 10, // Dynamische Punkte pro Sprung
   });
 
   const CANVAS_WIDTH = 800;
@@ -46,27 +50,35 @@ const RunnerGame: React.FC<RunnerGameProps> = ({ targetKeys, onGameOver }) => {
   const GRAVITY = 0.5;
   const OBSTACLE_WIDTH = 40;
   const OBSTACLE_HEIGHT = 50;
-  const MIN_OBSTACLE_SPACING = 200;
-  const MAX_OBSTACLE_SPACING = 400;
+  const MIN_OBSTACLE_SPACING = 80;
+  const MAX_OBSTACLE_SPACING = 120;
 
-  // Konvertiere targetKeys in Array
-  const availableKeys = targetKeys.split('');
-
-  // Zufälliger Buchstabe für Hindernis mit optionaler Groß-/Kleinschreibung
-  const getRandomLetter = useCallback((difficultyLevel: number) => {
-    const baseLetter = availableKeys[Math.floor(Math.random() * availableKeys.length)];
-
-    // Ab Schwierigkeitsgrad 1: 50% Chance für Großbuchstaben
-    // Ab Schwierigkeitsgrad 2: 70% Chance für Großbuchstaben
-    if (difficultyLevel >= 1) {
-      const uppercaseChance = difficultyLevel >= 2 ? 0.7 : 0.5;
-      if (Math.random() < uppercaseChance) {
-        return baseLetter.toUpperCase();
-      }
+  // Progressive Buchstaben-Sets wie bei den Lektionen
+  const getKeysForLevel = useCallback((level: number): string[] => {
+    switch (level) {
+      case 0:
+        return ['a', 's', 'd', 'f', 'j', 'k', 'l']; // Äußere Grundreihe
+      case 1:
+        return ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l']; // + Mittlere Grundreihe
+      case 2:
+        return ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'q', 'w', 'e', 'r', 'u', 'i']; // + Äußere obere Reihe
+      case 3:
+        return ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'q', 'w', 'e', 'r', 't', 'z', 'u', 'i', 'o', 'p']; // + Mittlere obere Reihe
+      case 4:
+        return ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'q', 'w', 'e', 'r', 't', 'z', 'u', 'i', 'o', 'p', 'y', 'x', 'c', 'v', 'b', 'n']; // + Untere Reihe
+      case 5:
+        return ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'q', 'w', 'e', 'r', 't', 'z', 'u', 'i', 'o', 'p', 'y', 'x', 'c', 'v', 'b', 'n', 'm']; // + m (alle Buchstaben)
+      default:
+        return ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'q', 'w', 'e', 'r', 't', 'z', 'u', 'i', 'o', 'p', 'y', 'x', 'c', 'v', 'b', 'n', 'm'];
     }
+  }, []);
 
+  // Zufälliger Buchstabe für Hindernis basierend auf Schwierigkeitsgrad
+  const getRandomLetter = useCallback((difficultyLevel: number) => {
+    const availableKeys = getKeysForLevel(difficultyLevel);
+    const baseLetter = availableKeys[Math.floor(Math.random() * availableKeys.length)];
     return baseLetter;
-  }, [availableKeys]);
+  }, [getKeysForLevel]);
 
   // Tasteneingabe Handler
   useEffect(() => {
@@ -80,6 +92,7 @@ const RunnerGame: React.FC<RunnerGameProps> = ({ targetKeys, onGameOver }) => {
       if (!gameStarted && (e.key === ' ' || e.key === 'Spacebar')) {
         setGameStarted(true);
         gameStateRef.current.gameOver = false;
+        gameStateRef.current.startTime = Date.now();
         return;
       }
 
@@ -101,7 +114,7 @@ const RunnerGame: React.FC<RunnerGameProps> = ({ targetKeys, onGameOver }) => {
         state.isJumping = true;
         state.playerVelocity = JUMP_STRENGTH;
         state.correctPresses++;
-        setScore(prev => prev + 10);
+        setScore(prev => prev + state.pointsPerJump);
       }
     };
 
@@ -238,6 +251,7 @@ const RunnerGame: React.FC<RunnerGameProps> = ({ targetKeys, onGameOver }) => {
       // Hindernisse spawnen
       state.nextObstacleIn--;
       if (state.nextObstacleIn <= 0) {
+        const cactusType = Math.floor(Math.random() * 3); // 0, 1 oder 2
         const obstacle: Obstacle = {
           x: CANVAS_WIDTH,
           y: GROUND_Y - OBSTACLE_HEIGHT,
@@ -245,30 +259,68 @@ const RunnerGame: React.FC<RunnerGameProps> = ({ targetKeys, onGameOver }) => {
           height: OBSTACLE_HEIGHT,
           letter: getRandomLetter(state.difficultyLevel),
           passed: false,
+          cactusType,
         };
         state.obstacles.push(obstacle);
         state.totalObstacles++;
-        state.nextObstacleIn =
-          MIN_OBSTACLE_SPACING + Math.random() * (MAX_OBSTACLE_SPACING - MIN_OBSTACLE_SPACING);
+
+        // Abstände reduzieren NACH Level 5 (erst wenn alle Buchstaben da sind)
+        let minSpacing = MIN_OBSTACLE_SPACING;
+        let maxSpacing = MAX_OBSTACLE_SPACING;
+
+        if (state.difficultyLevel >= 5 && state.totalObstacles > 25) {
+          // Reduziere Abstände kontinuierlich nach Anzahl der Hindernisse (alle 3 Hindernisse)
+          const reductionFactor = Math.floor((state.totalObstacles - 25) / 3);
+          minSpacing = Math.max(MIN_OBSTACLE_SPACING - (reductionFactor * 4), 20); // Minimum 20px
+          maxSpacing = Math.max(MAX_OBSTACLE_SPACING - (reductionFactor * 6), 35); // Minimum 35px
+
+          // Erhöhe Punkte basierend auf Schwierigkeit: 10 + (reductionFactor * 5)
+          // Je kürzer die Abstände, desto mehr Punkte (max 60 Punkte)
+          state.pointsPerJump = Math.min(10 + (reductionFactor * 5), 60);
+        } else {
+          // Normale Punkte vor erhöhter Schwierigkeit
+          state.pointsPerJump = 10;
+        }
+
+        state.nextObstacleIn = minSpacing + Math.random() * (maxSpacing - minSpacing);
       }
 
       // Hindernisse zeichnen und bewegen
       state.obstacles.forEach((obstacle, index) => {
         obstacle.x -= state.gameSpeed;
 
-        // Hindernis zeichnen
-        ctx.fillStyle = '#8B0000';
-        ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+        // Kaktus zeichnen (verschiedene Typen)
+        ctx.fillStyle = '#4A7C4E'; // Grün für Kaktus
 
-        // Buchstabe auf Hindernis (exakte Darstellung - mit Groß-/Kleinschreibung)
-        ctx.fillStyle = '#FFF';
+        const cactusX = obstacle.x;
+        const cactusY = obstacle.y;
+        const cactusH = obstacle.height;
+
+        if (obstacle.cactusType === 0) {
+          // Einfacher Kaktus
+          ctx.fillRect(cactusX + 12, cactusY, 16, cactusH); // Stamm
+          ctx.fillRect(cactusX + 8, cactusY + 10, 8, 15); // Linker Arm
+          ctx.fillRect(cactusX + 24, cactusY + 15, 8, 15); // Rechter Arm
+        } else if (obstacle.cactusType === 1) {
+          // Hoher Kaktus
+          ctx.fillRect(cactusX + 14, cactusY, 12, cactusH); // Stamm
+          ctx.fillRect(cactusX + 6, cactusY + 15, 8, 20); // Linker Arm
+        } else {
+          // Breiter Kaktus mit zwei Armen
+          ctx.fillRect(cactusX + 12, cactusY + 5, 16, cactusH - 5); // Stamm
+          ctx.fillRect(cactusX + 4, cactusY + 12, 8, 18); // Linker Arm unten
+          ctx.fillRect(cactusX + 28, cactusY + 12, 8, 18); // Rechter Arm unten
+        }
+
+        // Buchstabe unter dem Kaktus
+        ctx.fillStyle = '#000';
         ctx.font = 'bold 24px Arial';
         ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
+        ctx.textBaseline = 'top';
         ctx.fillText(
           obstacle.letter,
           obstacle.x + obstacle.width / 2,
-          obstacle.y + obstacle.height / 2
+          obstacle.y + obstacle.height + 5 // 5px unter dem Kaktus
         );
 
         // Kollisionserkennung und erfolgreiches Überspringen
@@ -293,10 +345,12 @@ const RunnerGame: React.FC<RunnerGameProps> = ({ targetKeys, onGameOver }) => {
                 const newLives = prev - 1;
                 if (newLives <= 0) {
                   state.gameOver = true;
+                  const elapsedTimeMs = Date.now() - state.startTime;
                   onGameOver({
                     correctPresses: state.correctPresses,
                     missedObstacles: state.missedObstacles,
                     totalObstacles: state.totalObstacles,
+                    elapsedTimeMs,
                   });
                 }
                 return newLives;
@@ -313,10 +367,12 @@ const RunnerGame: React.FC<RunnerGameProps> = ({ targetKeys, onGameOver }) => {
             const newLives = prev - 1;
             if (newLives <= 0) {
               state.gameOver = true;
+              const elapsedTimeMs = Date.now() - state.startTime;
               onGameOver({
                 correctPresses: state.correctPresses,
                 missedObstacles: state.missedObstacles,
                 totalObstacles: state.totalObstacles,
+                elapsedTimeMs,
               });
             }
             return newLives;
@@ -329,15 +385,20 @@ const RunnerGame: React.FC<RunnerGameProps> = ({ targetKeys, onGameOver }) => {
         }
       });
 
-      // Geschwindigkeit und Schwierigkeit erhöhen mit der Zeit
-      if (state.frameCount % 300 === 0) {
-        state.gameSpeed += 0.5;
-      }
-
-      // Schwierigkeitsgrad erhöhen (Großbuchstaben hinzufügen)
-      // Level 1: Nach 5 Hindernissen (Groß-/Kleinbuchstaben 50/50)
-      // Level 2: Nach 15 Hindernissen (Groß-/Kleinbuchstaben 70/30)
-      if (state.totalObstacles >= 15 && state.difficultyLevel < 2) {
+      // Schwierigkeitsgrad erhöhen (mehr Buchstaben hinzufügen)
+      // Level 0: Grundreihe außen (0-4 Hindernisse)
+      // Level 1: + gh (5-9 Hindernisse)
+      // Level 2: + obere Reihe außen (10-14 Hindernisse)
+      // Level 3: + obere Reihe mitte (15-19 Hindernisse)
+      // Level 4: + untere Reihe (20-24 Hindernisse)
+      // Level 5: + m, alle Buchstaben (25+ Hindernisse)
+      if (state.totalObstacles >= 25 && state.difficultyLevel < 5) {
+        state.difficultyLevel = 5;
+      } else if (state.totalObstacles >= 20 && state.difficultyLevel < 4) {
+        state.difficultyLevel = 4;
+      } else if (state.totalObstacles >= 15 && state.difficultyLevel < 3) {
+        state.difficultyLevel = 3;
+      } else if (state.totalObstacles >= 10 && state.difficultyLevel < 2) {
         state.difficultyLevel = 2;
       } else if (state.totalObstacles >= 5 && state.difficultyLevel < 1) {
         state.difficultyLevel = 1;
@@ -348,11 +409,38 @@ const RunnerGame: React.FC<RunnerGameProps> = ({ targetKeys, onGameOver }) => {
       ctx.font = 'bold 20px Arial';
       ctx.textAlign = 'left';
       ctx.fillText(`Score: ${score}`, 10, 30);
-      ctx.fillText(`Leben: ${'❤️'.repeat(Math.max(0, lives))}`, 10, 60);
+
+      // Zeige Punkte-Multiplikator wenn erhöht
+      if (state.pointsPerJump > 10) {
+        ctx.fillStyle = '#FFD700'; // Gold
+        ctx.font = 'bold 18px Arial';
+        ctx.fillText(`+${state.pointsPerJump} pro Sprung!`, 10, 55);
+        ctx.fillStyle = '#000';
+        ctx.font = 'bold 20px Arial';
+        ctx.fillText(`Leben: ${'❤️'.repeat(Math.max(0, lives))}`, 10, 80);
+      } else {
+        ctx.fillText(`Leben: ${'❤️'.repeat(Math.max(0, lives))}`, 10, 60);
+      }
 
       // Schwierigkeitsgrad-Anzeige
-      const difficultyText = state.difficultyLevel === 0 ? 'Einfach' : state.difficultyLevel === 1 ? 'Mittel' : 'Schwer';
-      ctx.fillText(`Level: ${difficultyText}`, 10, 90);
+      const difficultyNames = [
+        'Grundreihe außen',
+        'Grundreihe komplett',
+        'Obere Reihe außen',
+        'Obere Reihe komplett',
+        'Untere Reihe',
+        'Alle Buchstaben'
+      ];
+      const levelY = state.pointsPerJump > 10 ? 110 : 90;
+      ctx.fillText(`Level: ${difficultyNames[state.difficultyLevel]}`, 10, levelY);
+
+      // Highscore anzeigen (rechts oben)
+      if (highscore) {
+        ctx.textAlign = 'right';
+        ctx.fillStyle = '#FFD700'; // Gold
+        ctx.fillText(`🏆 Highscore: ${highscore.wpm.toFixed(1)} WPM`, CANVAS_WIDTH - 10, 30);
+        ctx.fillStyle = '#000';
+      }
 
       if (!state.gameOver) {
         animationFrameId = requestAnimationFrame(gameLoop);

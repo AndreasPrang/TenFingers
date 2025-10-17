@@ -41,6 +41,34 @@
   font-weight: 700;
 }
 
+.lessons-section {
+  max-width: 1200px;
+  margin: 0 auto 50px;
+  text-align: center;
+}
+
+.section-title {
+  color: white;
+  font-size: 28px;
+  margin-bottom: 10px;
+  text-align: center;
+  font-weight: 700;
+}
+
+.section-description {
+  color: white;
+  font-size: 16px;
+  text-align: center;
+  margin-bottom: 30px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 10px 20px;
+  border-radius: 25px;
+  display: inline-block;
+  margin-left: auto;
+  margin-right: auto;
+  font-weight: 500;
+}
+
 .btn-register-inline {
   padding: 10px 20px;
   background: white;
@@ -88,6 +116,33 @@
   border: 3px solid #4CAF50;
 }
 
+.lesson-card.extra {
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  border: 3px solid #FFD700;
+}
+
+.lesson-card.extra .lesson-title {
+  color: #663300;
+  font-weight: 700;
+}
+
+.lesson-card.extra .lesson-description {
+  color: #663300;
+}
+
+.lesson-card.extra .lesson-target-keys {
+  background: rgba(255, 255, 255, 0.5);
+  color: #663300;
+}
+
+.lesson-card.extra .lesson-target-keys strong {
+  color: #663300;
+}
+
+.lesson-card.extra .btn-start {
+  background: linear-gradient(135deg, #663300 0%, #4d2600 100%);
+}
+
 .lesson-level {
   display: inline-block;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -97,6 +152,11 @@
   font-size: 12px;
   font-weight: 600;
   margin-bottom: 15px;
+}
+
+.lesson-card.extra .lesson-level {
+  background: linear-gradient(135deg, #663300 0%, #4d2600 100%);
+  font-size: 16px;
 }
 
 .lesson-title {
@@ -141,6 +201,18 @@
   font-size: 18px;
   font-weight: 700;
   color: #667eea;
+}
+
+.lesson-card.extra .lesson-stats {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.lesson-card.extra .stat-label {
+  color: #663300;
+}
+
+.lesson-card.extra .stat-value {
+  color: #663300;
 }
 
 .completed-badge {

@@ -26,6 +26,7 @@ export interface Lesson {
   text_content: string;
   target_keys: string;
   lesson_type?: string;
+  is_extra?: boolean;
   created_at: string;
 }
 

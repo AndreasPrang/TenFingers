@@ -73,6 +73,55 @@ const Lessons: React.FC = () => {
     );
   }
 
+  // Teile Lektionen in Extra und Normal auf
+  const extraLessons = lessons.filter(lesson => lesson.is_extra);
+  const normalLessons = lessons.filter(lesson => !lesson.is_extra);
+
+  const renderLessonCard = (lesson: Lesson) => {
+    const progress = getLessonProgress(lesson.id);
+
+    return (
+      <div
+        key={lesson.id}
+        className={`lesson-card ${progress?.completed ? 'completed' : ''} ${lesson.is_extra ? 'extra' : ''}`}
+        onClick={() => navigate(`/practice/${lesson.id}`)}
+      >
+        <div className="lesson-level">
+          {lesson.is_extra ? '⭐' : `Level ${lesson.level}`}
+        </div>
+        <h3 className="lesson-title">{lesson.title}</h3>
+        <p className="lesson-description">{lesson.description}</p>
+
+        {progress && (
+          <div className="lesson-stats">
+            <div className="stat">
+              <span className="stat-label">Beste WPM</span>
+              <span className="stat-value">{Number(progress.bestWpm).toFixed(1)}</span>
+            </div>
+            <div className="stat">
+              <span className="stat-label">Genauigkeit</span>
+              <span className="stat-value">{Number(progress.bestAccuracy).toFixed(1)}%</span>
+            </div>
+            <div className="stat">
+              <span className="stat-label">Versuche</span>
+              <span className="stat-value">{progress.attempts}</span>
+            </div>
+          </div>
+        )}
+
+        {progress?.completed && (
+          <div className="completed-badge">✓ Abgeschlossen</div>
+        )}
+
+        <div className="lesson-target-keys">
+          <strong>Ziel-Tasten:</strong> {lesson.target_keys}
+        </div>
+
+        <button className="btn-start">Starten</button>
+      </div>
+    );
+  };
+
   return (
     <div className="lessons-container">
       <header className="lessons-header">
@@ -88,50 +137,27 @@ const Lessons: React.FC = () => {
         )}
       </header>
 
-      <div className="lessons-grid">
-        {lessons.map((lesson) => {
-          const progress = getLessonProgress(lesson.id);
+      {/* Extra-Lektionen */}
+      {extraLessons.length > 0 && (
+        <section className="lessons-section">
+          <h2 className="section-title">⭐ Extra-Level</h2>
+          <p className="section-description">Spielerisches Üben und freies Training</p>
+          <div className="lessons-grid">
+            {extraLessons.map(renderLessonCard)}
+          </div>
+        </section>
+      )}
 
-          return (
-            <div
-              key={lesson.id}
-              className={`lesson-card ${progress?.completed ? 'completed' : ''}`}
-              onClick={() => navigate(`/practice/${lesson.id}`)}
-            >
-              <div className="lesson-level">Level {lesson.level}</div>
-              <h3 className="lesson-title">{lesson.title}</h3>
-              <p className="lesson-description">{lesson.description}</p>
-
-              {progress && (
-                <div className="lesson-stats">
-                  <div className="stat">
-                    <span className="stat-label">Beste WPM</span>
-                    <span className="stat-value">{Number(progress.bestWpm).toFixed(1)}</span>
-                  </div>
-                  <div className="stat">
-                    <span className="stat-label">Genauigkeit</span>
-                    <span className="stat-value">{Number(progress.bestAccuracy).toFixed(1)}%</span>
-                  </div>
-                  <div className="stat">
-                    <span className="stat-label">Versuche</span>
-                    <span className="stat-value">{progress.attempts}</span>
-                  </div>
-                </div>
-              )}
-
-              {progress?.completed && (
-                <div className="completed-badge">✓ Abgeschlossen</div>
-              )}
-
-              <div className="lesson-target-keys">
-                <strong>Ziel-Tasten:</strong> {lesson.target_keys}
-              </div>
-
-              <button className="btn-start">Starten</button>
-            </div>
-          );
-        })}
-      </div>
+      {/* Normale Trainings-Lektionen */}
+      {normalLessons.length > 0 && (
+        <section className="lessons-section">
+          <h2 className="section-title">📚 Trainingsaufbau</h2>
+          <p className="section-description">Systematisches Lernen des 10-Finger-Systems</p>
+          <div className="lessons-grid">
+            {normalLessons.map(renderLessonCard)}
+          </div>
+        </section>
+      )}
     </div>
   );
 };

@@ -94,6 +94,42 @@ const getUserStats = async (req, res) => {
   }
 };
 
+const getLessonHighscore = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { lessonId } = req.params;
+
+    // Hole den besten Versuch (höchster WPM)
+    const result = await pool.query(
+      `SELECT wpm, accuracy, completed, completed_at
+       FROM progress
+       WHERE user_id = $1 AND lesson_id = $2 AND is_anonymous = false
+       ORDER BY wpm DESC
+       LIMIT 1`,
+      [userId, lessonId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.json({ hasHighscore: false });
+    }
+
+    // Konvertiere Strings zu Numbers
+    const highscore = result.rows[0];
+    res.json({
+      hasHighscore: true,
+      highscore: {
+        wpm: parseFloat(highscore.wpm),
+        accuracy: parseFloat(highscore.accuracy),
+        completed: highscore.completed,
+        completed_at: highscore.completed_at
+      }
+    });
+  } catch (error) {
+    console.error('Fehler beim Abrufen des Highscores:', error);
+    res.status(500).json({ error: 'Serverfehler beim Abrufen des Highscores' });
+  }
+};
+
 // Hilfsfunktion zum Aktualisieren der User-Statistiken
 const updateUserStats = async (userId) => {
   try {
@@ -129,5 +165,6 @@ module.exports = {
   saveProgress,
   getUserProgress,
   getLessonProgress,
-  getUserStats
+  getUserStats,
+  getLessonHighscore
 };

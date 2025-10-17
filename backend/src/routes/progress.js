@@ -4,7 +4,8 @@ const {
   saveProgress,
   getUserProgress,
   getLessonProgress,
-  getUserStats
+  getUserStats,
+  getLessonHighscore
 } = require('../controllers/progressController');
 const { authenticateToken, optionalAuth } = require('../middleware/auth');
 
@@ -89,6 +90,27 @@ router.post('/', optionalAuth, saveProgress);
  *                 $ref: '#/components/schemas/Progress'
  */
 router.get('/', authenticateToken, getUserProgress);
+
+/**
+ * @swagger
+ * /api/progress/lesson/{lessonId}/highscore:
+ *   get:
+ *     summary: Highscore für eine spezifische Lektion abrufen
+ *     tags: [Progress]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: lessonId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Lektions-ID
+ *     responses:
+ *       200:
+ *         description: Bester Versuch für die Lektion
+ */
+router.get('/lesson/:lessonId/highscore', authenticateToken, getLessonHighscore);
 
 /**
  * @swagger

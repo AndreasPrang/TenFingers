@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { lessonsAPI, progressAPI, badgesAPI } from '../services/api';
-import { Lesson, TypingStats, Badge, CurrentBadgeResponse } from '../types';
+import { Lesson, TypingStats, Badge } from '../types';
 import { useAuth } from '../context/AuthContext';
 import Keyboard from '../components/Keyboard';
 import BadgeUnlockModal from '../components/BadgeUnlockModal';
+import HighscoreModal from '../components/HighscoreModal';
 import RunnerGame from '../components/RunnerGame';
 import '../styles/Practice.css';
 
@@ -20,12 +21,13 @@ const Practice: React.FC = () => {
   const [finished, setFinished] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [userInput, setUserInput] = useState('');
-  const [errors, setErrors] = useState<number[]>([]);
   const [showError, setShowError] = useState(false);
   const [practiceText, setPracticeText] = useState('');
   const [errorAttempts, setErrorAttempts] = useState(0);
   const [unlockedBadge, setUnlockedBadge] = useState<Badge | null>(null);
   const [previousBadgeLevel, setPreviousBadgeLevel] = useState<number>(0);
+  const [highscore, setHighscore] = useState<{ wpm: number; accuracy: number } | null>(null);
+  const [newHighscore, setNewHighscore] = useState<{ newWpm: number; oldWpm: number; accuracy: number } | null>(null);
   const [stats, setStats] = useState<TypingStats>({
     wpm: 0,
     accuracy: 100,
@@ -43,7 +45,6 @@ const Practice: React.FC = () => {
     setFinished(false);
     setCurrentIndex(0);
     setUserInput('');
-    setErrors([]);
     setErrorAttempts(0);
     setPracticeText('');
     startTime.current = 0;
@@ -102,6 +103,21 @@ const Practice: React.FC = () => {
       ]);
       setLesson(lessonData);
       setAllLessons(allLessonsData);
+
+      // Lade Highscore für eingeloggte User
+      if (isAuthenticated) {
+        try {
+          const highscoreData = await progressAPI.getLessonHighscore(Number(id));
+          if (highscoreData.hasHighscore && highscoreData.highscore) {
+            setHighscore({
+              wpm: highscoreData.highscore.wpm,
+              accuracy: highscoreData.highscore.accuracy
+            });
+          }
+        } catch (err) {
+          console.error('Fehler beim Laden des Highscores:', err);
+        }
+      }
     } catch (err) {
       console.error('Fehler beim Laden der Lektion:', err);
     } finally {
@@ -177,7 +193,6 @@ const Practice: React.FC = () => {
     startTime.current = Date.now();
     setCurrentIndex(0);
     setUserInput('');
-    setErrors([]);
     setErrorAttempts(0);
     setFinished(false);
     setStats({
@@ -361,16 +376,18 @@ const Practice: React.FC = () => {
   const displayText = getDisplayText();
 
   // Handler für Runner-Game-Over
-  const handleRunnerGameOver = async (gameStats: { correctPresses: number; missedObstacles: number; totalObstacles: number }) => {
+  const handleRunnerGameOver = async (gameStats: { correctPresses: number; missedObstacles: number; totalObstacles: number; elapsedTimeMs: number }) => {
     const accuracy = gameStats.totalObstacles > 0
       ? (gameStats.correctPresses / gameStats.totalObstacles) * 100
       : 0;
 
-    // Schätze WPM basierend auf korrekten Tastendrücken
-    const estimatedWpm = gameStats.correctPresses * 2; // Vereinfachte Berechnung
+    // WPM berechnen basierend auf tatsächlicher Zeit
+    const elapsedMinutes = gameStats.elapsedTimeMs / 60000;
+    const words = gameStats.correctPresses / 5; // Standard: 5 Zeichen = 1 Wort
+    const wpm = elapsedMinutes > 0 ? words / elapsedMinutes : 0;
 
     const finalStats: TypingStats = {
-      wpm: estimatedWpm,
+      wpm,
       accuracy,
       correctChars: gameStats.correctPresses,
       incorrectChars: gameStats.missedObstacles,
@@ -378,6 +395,18 @@ const Practice: React.FC = () => {
     };
 
     setStats(finalStats);
+
+    // Prüfe ob neuer Highscore erreicht wurde (nur für eingeloggte User)
+    if (isAuthenticated && highscore && wpm > highscore.wpm) {
+      setNewHighscore({
+        newWpm: wpm,
+        oldWpm: highscore.wpm,
+        accuracy
+      });
+      // Update Highscore
+      setHighscore({ wpm, accuracy });
+    }
+
     finishPractice(finalStats);
   };
 
@@ -389,6 +418,15 @@ const Practice: React.FC = () => {
           <BadgeUnlockModal
             badge={unlockedBadge}
             onClose={() => setUnlockedBadge(null)}
+          />
+        )}
+
+        {newHighscore && (
+          <HighscoreModal
+            newWpm={newHighscore.newWpm}
+            oldWpm={newHighscore.oldWpm}
+            accuracy={newHighscore.accuracy}
+            onClose={() => setNewHighscore(null)}
           />
         )}
 
@@ -404,6 +442,7 @@ const Practice: React.FC = () => {
 
         <RunnerGame
           targetKeys={lesson.target_keys}
+          highscore={highscore}
           onGameOver={handleRunnerGameOver}
         />
 
