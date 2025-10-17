@@ -420,19 +420,6 @@ const RunnerGame: React.FC<RunnerGameProps> = ({ targetKeys, highscore, onGameOv
         state.nextObstacleIn = minSpacing + Math.random() * (maxSpacing - minSpacing);
       }
 
-      // Vögel spawnen (ca alle 8-15 Sekunden bei 60 FPS)
-      state.nextBirdIn--;
-      if (state.nextBirdIn <= 0) {
-        const bird: Bird = {
-          x: CANVAS_WIDTH,
-          y: 50 + Math.random() * 200, // Zufällige Höhe im Himmel (50-250px)
-          wingFrame: 0,
-        };
-        state.birds.push(bird);
-        // Nächster Vogel in 480-900 Frames (8-15 Sekunden bei 60 FPS)
-        state.nextBirdIn = 480 + Math.random() * 420;
-      }
-
       // Wolken spawnen (ca alle 5-10 Sekunden bei 60 FPS)
       state.nextCloudIn--;
       if (state.nextCloudIn <= 0) {
@@ -447,7 +434,33 @@ const RunnerGame: React.FC<RunnerGameProps> = ({ targetKeys, highscore, onGameOv
         state.nextCloudIn = 300 + Math.random() * 300;
       }
 
-      // Vögel zeichnen und bewegen
+      // Vögel spawnen (ca alle 6-12 Sekunden bei 60 FPS)
+      state.nextBirdIn--;
+      if (state.nextBirdIn <= 0) {
+        const bird: Bird = {
+          x: CANVAS_WIDTH,
+          y: 50 + Math.random() * 200, // Zufällige Höhe im Himmel (50-250px)
+          wingFrame: 0,
+        };
+        state.birds.push(bird);
+        // Nächster Vogel in 360-720 Frames (6-12 Sekunden bei 60 FPS)
+        state.nextBirdIn = 360 + Math.random() * 360;
+      }
+
+      // Wolken zeichnen und bewegen (zuerst, damit sie im Hintergrund sind)
+      state.clouds.forEach((cloud, index) => {
+        // Wolken bewegen sich noch langsamer als Vögel (ein Viertel der Geschwindigkeit)
+        cloud.x -= state.gameSpeed * 0.25;
+
+        drawCloud(ctx, cloud.x, cloud.y, cloud.width, cloud.height);
+
+        // Entferne Wolken die aus dem Bildschirm sind
+        if (cloud.x + cloud.width < 0) {
+          state.clouds.splice(index, 1);
+        }
+      });
+
+      // Vögel zeichnen und bewegen (nach Wolken, damit sie VOR den Wolken erscheinen)
       state.birds.forEach((bird, index) => {
         // Vögel fliegen langsamer als Hindernisse (halbe Geschwindigkeit)
         bird.x -= state.gameSpeed * 0.5;
@@ -460,19 +473,6 @@ const RunnerGame: React.FC<RunnerGameProps> = ({ targetKeys, highscore, onGameOv
         // Entferne Vögel die aus dem Bildschirm sind
         if (bird.x + 42 < 0) { // 42 ist die ungefähre Breite des Vogels
           state.birds.splice(index, 1);
-        }
-      });
-
-      // Wolken zeichnen und bewegen (VOR den Vögeln, damit sie über den Vögeln erscheinen)
-      state.clouds.forEach((cloud, index) => {
-        // Wolken bewegen sich noch langsamer als Vögel (ein Viertel der Geschwindigkeit)
-        cloud.x -= state.gameSpeed * 0.25;
-
-        drawCloud(ctx, cloud.x, cloud.y, cloud.width, cloud.height);
-
-        // Entferne Wolken die aus dem Bildschirm sind
-        if (cloud.x + cloud.width < 0) {
-          state.clouds.splice(index, 1);
         }
       });
 
@@ -734,7 +734,7 @@ const RunnerGame: React.FC<RunnerGameProps> = ({ targetKeys, highscore, onGameOv
     // Initialisierung
     gameStateRef.current.playerY = GROUND_Y - PLAYER_SIZE;
     gameStateRef.current.nextObstacleIn = 150;
-    gameStateRef.current.nextBirdIn = 300 + Math.random() * 300; // Erster Vogel nach 5-10 Sekunden
+    gameStateRef.current.nextBirdIn = 120 + Math.random() * 180; // Erster Vogel nach 2-5 Sekunden
     gameStateRef.current.nextCloudIn = 60 + Math.random() * 120; // Erste Wolke nach 1-3 Sekunden
     gameStateRef.current.lastFrameTime = 0; // Reset delta-time
 
