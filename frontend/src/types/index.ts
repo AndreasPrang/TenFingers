@@ -25,6 +25,7 @@ export interface Lesson {
   level: number;
   text_content: string;
   target_keys: string;
+  lesson_type?: string;
   created_at: string;
 }
 

@@ -5,6 +5,7 @@ import { Lesson, TypingStats, Badge, CurrentBadgeResponse } from '../types';
 import { useAuth } from '../context/AuthContext';
 import Keyboard from '../components/Keyboard';
 import BadgeUnlockModal from '../components/BadgeUnlockModal';
+import RunnerGame from '../components/RunnerGame';
 import '../styles/Practice.css';
 
 const Practice: React.FC = () => {
@@ -359,6 +360,116 @@ const Practice: React.FC = () => {
 
   const displayText = getDisplayText();
 
+  // Handler für Runner-Game-Over
+  const handleRunnerGameOver = async (gameStats: { correctPresses: number; missedObstacles: number; totalObstacles: number }) => {
+    const accuracy = gameStats.totalObstacles > 0
+      ? (gameStats.correctPresses / gameStats.totalObstacles) * 100
+      : 0;
+
+    // Schätze WPM basierend auf korrekten Tastendrücken
+    const estimatedWpm = gameStats.correctPresses * 2; // Vereinfachte Berechnung
+
+    const finalStats: TypingStats = {
+      wpm: estimatedWpm,
+      accuracy,
+      correctChars: gameStats.correctPresses,
+      incorrectChars: gameStats.missedObstacles,
+      totalChars: gameStats.totalObstacles,
+    };
+
+    setStats(finalStats);
+    finishPractice(finalStats);
+  };
+
+  // Runner-Modus
+  if (lesson && lesson.lesson_type === 'runner') {
+    return (
+      <div className="practice-container">
+        {unlockedBadge && (
+          <BadgeUnlockModal
+            badge={unlockedBadge}
+            onClose={() => setUnlockedBadge(null)}
+          />
+        )}
+
+        <header className="practice-header">
+          <button className="btn-back" onClick={() => navigate('/lessons')}>
+            ← Zurück zu Lektionen
+          </button>
+          <div className="lesson-info">
+            <h2>{lesson.title}</h2>
+            <p>{lesson.description}</p>
+          </div>
+        </header>
+
+        <RunnerGame
+          targetKeys={lesson.target_keys}
+          onGameOver={handleRunnerGameOver}
+        />
+
+        {finished && (
+          <div className="practice-result-overlay">
+            <div className="practice-result-modal">
+              <h2>Spiel beendet!</h2>
+              <div className="result-stats">
+                <div className="result-stat">
+                  <div className="result-stat-label">Geschwindigkeit</div>
+                  <div className="result-stat-value">{stats.wpm.toFixed(1)} WPM</div>
+                </div>
+                <div className="result-stat">
+                  <div className="result-stat-label">Genauigkeit</div>
+                  <div className="result-stat-value">{stats.accuracy.toFixed(1)}%</div>
+                </div>
+                <div className="result-stat">
+                  <div className="result-stat-label">Korrekte Sprünge</div>
+                  <div className="result-stat-value">{stats.correctChars}</div>
+                </div>
+              </div>
+
+              {!isAuthenticated && (
+                <div className="guest-info-message">
+                  💡 <strong>Tipp:</strong> Registriere dich kostenlos, um deinen Fortschritt zu speichern und zu verfolgen!
+                </div>
+              )}
+
+              {stats.accuracy >= 80 ? (
+                <div className="success-message">
+                  Großartig! Du hast diese Lektion erfolgreich abgeschlossen!
+                  {!isAuthenticated && ' (Als Gast - Fortschritt nicht gespeichert)'}
+                </div>
+              ) : (
+                <div className="try-again-message">
+                  Versuche es nochmal, um eine höhere Genauigkeit zu erreichen (mind. 80%)
+                </div>
+              )}
+
+              <div className="result-actions">
+                {!isAuthenticated && (
+                  <button className="btn-register-prompt" onClick={() => navigate('/register')}>
+                    Jetzt registrieren
+                  </button>
+                )}
+                <button className="btn-retry" onClick={() => window.location.reload()}>
+                  Nochmal versuchen
+                </button>
+                {getNextLesson() ? (
+                  <button className="btn-next-lesson" onClick={handleNextLesson}>
+                    Nächste Lektion →
+                  </button>
+                ) : (
+                  <button className="btn-next" onClick={() => navigate('/lessons')}>
+                    Zur Lektionsübersicht
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Normaler Modus
   return (
     <div className="practice-container">
       {unlockedBadge && (
