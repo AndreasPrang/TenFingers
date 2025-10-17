@@ -132,15 +132,39 @@ const RunnerGame: React.FC<RunnerGameProps> = ({ targetKeys, highscore, onGameOv
   const drawDino = (ctx: CanvasRenderingContext2D, dinoX: number, dinoY: number, legFrame: number = 0) => {
     ctx.fillStyle = '#535353'; // Dunkelgrau wie Chrome Dino
 
-    // Hinterbeine (2 Beine mit Animation) - 1.5x skaliert
-    // legFrame: 0 = beide unten, 1 = linkes hoch, 2 = rechtes hoch
+    // Dynamische Offsets basierend auf legFrame für Körper-Bewegung
+    // legFrame: 0 = Mitte, 1 = hoch, 2 = runter
+    let bodyOffsetY = 0;
+    let headOffsetY = 0;
+    let tailOffsetX = 0;
+    let tailOffsetY = 0;
+    let tailTipOffsetX = 0;
+    let tailTipOffsetY = 0;
+
+    if (legFrame === 1) {
+      bodyOffsetY = -2; // Körper leicht nach oben
+      headOffsetY = -1; // Kopf nickt leicht nach oben
+      tailOffsetX = -2; // Schwanz-Basis nach links
+      tailOffsetY = 1;  // Schwanz-Basis leicht runter
+      tailTipOffsetX = -4; // Schwanz-Ende stärker nach links
+      tailTipOffsetY = 2;  // Schwanz-Ende stärker runter
+    } else if (legFrame === 2) {
+      bodyOffsetY = 2;  // Körper leicht nach unten
+      headOffsetY = 1;  // Kopf nickt leicht nach unten
+      tailOffsetX = 2;  // Schwanz-Basis nach rechts
+      tailOffsetY = -1; // Schwanz-Basis leicht hoch
+      tailTipOffsetX = 4;  // Schwanz-Ende stärker nach rechts
+      tailTipOffsetY = -2; // Schwanz-Ende stärker hoch
+    }
+
+    // Hinterbeine (2 Beine mit Animation) - höher anheben für mehr Dynamik
     if (legFrame === 1) {
       // Linkes Bein angehoben, rechtes unten
       ctx.fillRect(dinoX + 33, dinoY + 39, 6, 18); // Rechtes Bein unten
-      ctx.fillRect(dinoX + 27, dinoY + 33, 6, 12); // Linkes Bein angehoben (kürzer)
+      ctx.fillRect(dinoX + 27, dinoY + 30, 6, 15); // Linkes Bein höher angehoben
     } else if (legFrame === 2) {
       // Rechtes Bein angehoben, linkes unten
-      ctx.fillRect(dinoX + 33, dinoY + 33, 6, 12); // Rechtes Bein angehoben (kürzer)
+      ctx.fillRect(dinoX + 33, dinoY + 30, 6, 15); // Rechtes Bein höher angehoben
       ctx.fillRect(dinoX + 27, dinoY + 39, 6, 18); // Linkes Bein unten
     } else {
       // Beide Beine unten (beim Springen oder Mittelposition)
@@ -148,41 +172,43 @@ const RunnerGame: React.FC<RunnerGameProps> = ({ targetKeys, highscore, onGameOv
       ctx.fillRect(dinoX + 27, dinoY + 39, 6, 18); // Linkes Bein
     }
 
-    // Körper (Hauptteil)
-    ctx.fillRect(dinoX + 15, dinoY + 18, 33, 24);
+    // Körper (Hauptteil) - bewegt sich mit bodyOffsetY
+    ctx.fillRect(dinoX + 15, dinoY + 18 + bodyOffsetY, 33, 24);
 
-    // Hals
-    ctx.fillRect(dinoX + 39, dinoY + 6, 9, 18);
+    // Hals - bewegt sich mit Körper
+    ctx.fillRect(dinoX + 39, dinoY + 6 + bodyOffsetY, 9, 18);
 
-    // Kopf
-    ctx.fillRect(dinoX + 39, dinoY, 24, 15);
+    // Kopf - bewegt sich mit Körper + extra Nicken
+    ctx.fillRect(dinoX + 39, dinoY + bodyOffsetY + headOffsetY, 24, 15);
 
-    // Schnauze
-    ctx.fillRect(dinoX + 57, dinoY + 6, 9, 9);
+    // Schnauze - bewegt sich mit Kopf
+    ctx.fillRect(dinoX + 57, dinoY + 6 + bodyOffsetY + headOffsetY, 9, 9);
 
-    // Schwanz
-    ctx.fillRect(dinoX + 3, dinoY + 21, 15, 12);
-    ctx.fillRect(dinoX, dinoY + 27, 6, 6);
+    // Schwanz - pendelt horizontal und vertikal (2 Segmente)
+    // Basis (näher am Körper) - bewegt sich weniger
+    ctx.fillRect(dinoX + 3 + tailOffsetX, dinoY + 21 + bodyOffsetY + tailOffsetY, 15, 12);
+    // Spitze (weiter vom Körper) - bewegt sich stärker für Pendel-Effekt
+    ctx.fillRect(dinoX + tailTipOffsetX, dinoY + 27 + bodyOffsetY + tailTipOffsetY, 6, 6);
 
-    // Auge (weiß mit schwarzer Pupille)
+    // Auge (weiß mit schwarzer Pupille) - bewegt sich mit Kopf
     ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(dinoX + 45, dinoY + 3, 6, 6);
+    ctx.fillRect(dinoX + 45, dinoY + 3 + bodyOffsetY + headOffsetY, 6, 6);
     ctx.fillStyle = '#000000';
-    ctx.fillRect(dinoX + 48, dinoY + 4.5, 3, 3);
+    ctx.fillRect(dinoX + 48, dinoY + 4.5 + bodyOffsetY + headOffsetY, 3, 3);
 
-    // Mund (kleine Linie)
+    // Mund (kleine Linie) - bewegt sich mit Kopf
     ctx.fillStyle = '#535353';
-    ctx.fillRect(dinoX + 60, dinoY + 12, 3, 1.5);
+    ctx.fillRect(dinoX + 60, dinoY + 12 + bodyOffsetY + headOffsetY, 3, 1.5);
 
-    // Vorderbeine (kurze T-Rex Arme)
+    // Vorderbeine (kurze T-Rex Arme) - bewegen sich mit Körper
     ctx.fillStyle = '#535353';
-    ctx.fillRect(dinoX + 27, dinoY + 24, 4.5, 9);
-    ctx.fillRect(dinoX + 36, dinoY + 24, 4.5, 9);
+    ctx.fillRect(dinoX + 27, dinoY + 24 + bodyOffsetY, 4.5, 9);
+    ctx.fillRect(dinoX + 36, dinoY + 24 + bodyOffsetY, 4.5, 9);
 
-    // Rückenzacken (3 Zacken)
-    ctx.fillRect(dinoX + 21, dinoY + 15, 3, 6);
-    ctx.fillRect(dinoX + 27, dinoY + 12, 3, 6);
-    ctx.fillRect(dinoX + 33, dinoY + 15, 3, 6);
+    // Rückenzacken (3 Zacken) - bewegen sich mit Körper
+    ctx.fillRect(dinoX + 21, dinoY + 15 + bodyOffsetY, 3, 6);
+    ctx.fillRect(dinoX + 27, dinoY + 12 + bodyOffsetY, 3, 6);
+    ctx.fillRect(dinoX + 33, dinoY + 15 + bodyOffsetY, 3, 6);
   };
 
   // Start Screen
