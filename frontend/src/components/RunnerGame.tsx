@@ -76,11 +76,14 @@ const RunnerGame: React.FC<RunnerGameProps> = ({ targetKeys, onGameOver }) => {
         e.preventDefault();
       }
 
-      if (!gameStarted || gameStateRef.current.gameOver) {
-        if (e.key === ' ' || e.key === 'Spacebar') {
-          setGameStarted(true);
-          gameStateRef.current.gameOver = false;
-        }
+      // Starten mit Leertaste wenn noch nicht gestartet
+      if (!gameStarted && (e.key === ' ' || e.key === 'Spacebar')) {
+        setGameStarted(true);
+        gameStateRef.current.gameOver = false;
+        return;
+      }
+
+      if (gameStateRef.current.gameOver) {
         return;
       }
 
@@ -105,6 +108,31 @@ const RunnerGame: React.FC<RunnerGameProps> = ({ targetKeys, onGameOver }) => {
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [gameStarted, getRandomLetter]);
+
+  // Start Screen
+  useEffect(() => {
+    if (gameStarted) return;
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Hintergrund
+    ctx.fillStyle = '#87CEEB';
+    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+    // Boden
+    ctx.fillStyle = '#8B4513';
+    ctx.fillRect(0, GROUND_Y, CANVAS_WIDTH, CANVAS_HEIGHT - GROUND_Y);
+
+    // "Drücke Leertaste zum Starten" Text
+    ctx.fillStyle = '#000';
+    ctx.font = 'bold 24px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Drücke Leertaste zum Starten', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2);
+  }, [gameStarted, CANVAS_WIDTH, CANVAS_HEIGHT, GROUND_Y]);
 
   // Game Loop
   useEffect(() => {
@@ -346,15 +374,6 @@ const RunnerGame: React.FC<RunnerGameProps> = ({ targetKeys, onGameOver }) => {
 
   return (
     <div className="runner-game-container">
-      {!gameStarted && (
-        <div className="runner-start-overlay">
-          <h2>Tastatur-Runner</h2>
-          <p>Drücke die angezeigten Buchstaben rechtzeitig, um über Hindernisse zu springen!</p>
-          <p><strong>Wichtig:</strong> Achte auf Groß- und Kleinschreibung!</p>
-          <p>Das Spiel wird mit der Zeit schwieriger - erst nur Kleinbuchstaben, dann gemischt.</p>
-          <p>Drücke <kbd>Leertaste</kbd> zum Starten</p>
-        </div>
-      )}
       <canvas
         ref={canvasRef}
         width={CANVAS_WIDTH}
