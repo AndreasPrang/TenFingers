@@ -11,6 +11,8 @@ interface Obstacle {
   cactusType: number; // 0, 1, oder 2 für verschiedene Kaktus-Arten
   isSpecial?: boolean; // Ob dies ein spezielles Hindernis ist
   specialType?: number; // 0: Tumbleweed, 1: Weihnachtsmann, 2: Geschenk, 3: Geist
+  destroyed?: boolean; // Ob das Hindernis zerstört wurde (bei Kollision)
+  destroyedFrame?: number; // Frame, in dem es zerstört wurde (für Animation)
 }
 
 interface Bird {
@@ -484,6 +486,56 @@ const RunnerGame: React.FC<RunnerGameProps> = ({ targetKeys, highscore, onGameOv
         const cactusY = obstacle.y;
         const cactusH = obstacle.height;
 
+        // Wenn das Hindernis zerstört wurde, zeichne die Trümmer
+        if (obstacle.destroyed && obstacle.destroyedFrame !== undefined) {
+          const framesSinceDestroyed = state.frameCount - obstacle.destroyedFrame;
+          const fallSpeed = 3; // Pixel pro Frame
+          const spreadSpeed = 2; // Horizontale Ausbreitung
+
+          ctx.fillStyle = '#4A7C4E'; // Grün für Kaktus-Trümmer
+
+          // Zeichne 4-6 Trümmerteile die fallen und sich ausbreiten
+          const pieces = [
+            { offsetX: -10, offsetY: 0, width: 15, height: 20, spreadDir: -1 },
+            { offsetX: 15, offsetY: -5, width: 12, height: 18, spreadDir: 1 },
+            { offsetX: 0, offsetY: 10, width: 18, height: 15, spreadDir: 0 },
+            { offsetX: -5, offsetY: 20, width: 10, height: 12, spreadDir: -0.5 },
+            { offsetX: 20, offsetY: 15, width: 14, height: 16, spreadDir: 1.2 },
+          ];
+
+          pieces.forEach(piece => {
+            const fallDistance = fallSpeed * framesSinceDestroyed;
+            const spreadDistance = spreadSpeed * framesSinceDestroyed * piece.spreadDir;
+            const pieceY = cactusY + piece.offsetY + fallDistance;
+            const pieceX = cactusX + 30 + piece.offsetX + spreadDistance;
+
+            // Nur zeichnen wenn noch sichtbar
+            if (pieceY < GROUND_Y + 20) {
+              ctx.fillRect(pieceX, pieceY, piece.width, piece.height);
+            }
+          });
+
+          // Buchstabe fällt auch
+          if (framesSinceDestroyed < 30) {
+            ctx.fillStyle = '#000';
+            ctx.font = 'bold 36px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            const letterFallDistance = fallSpeed * framesSinceDestroyed * 0.8;
+            ctx.fillText(
+              obstacle.letter,
+              obstacle.x + obstacle.width / 2,
+              obstacle.y + obstacle.height + 7.5 + letterFallDistance
+            );
+          }
+
+          // Entferne Trümmer nach 60 Frames (1 Sekunde)
+          if (framesSinceDestroyed > 60) {
+            state.obstacles.splice(index, 1);
+          }
+          return; // Überspringe normale Zeichnung
+        }
+
         // Spezielle Hindernisse oder normale Kakteen
         if (obstacle.isSpecial && obstacle.specialType !== undefined) {
           // ÜBERRASCHUNG!
@@ -616,6 +668,8 @@ const RunnerGame: React.FC<RunnerGameProps> = ({ targetKeys, highscore, onGameOv
             } else if (playerBottom > obstacle.y) {
               // Zu niedrig - Kollision!
               obstacle.passed = true;
+              obstacle.destroyed = true; // Markiere als zerstört
+              obstacle.destroyedFrame = state.frameCount; // Speichere Frame für Animation
               state.missedObstacles++;
               setLives(prev => {
                 const newLives = prev - 1;
@@ -642,6 +696,8 @@ const RunnerGame: React.FC<RunnerGameProps> = ({ targetKeys, highscore, onGameOv
         // Hindernis als "verpasst" markieren wenn Spieler vorbei ist (ohne zu springen)
         if (!obstacle.passed && obstacle.x + obstacle.width < PLAYER_X) {
           obstacle.passed = true;
+          obstacle.destroyed = true; // Markiere als zerstört
+          obstacle.destroyedFrame = state.frameCount; // Speichere Frame für Animation
           state.missedObstacles++;
           setLives(prev => {
             const newLives = prev - 1;
@@ -663,8 +719,8 @@ const RunnerGame: React.FC<RunnerGameProps> = ({ targetKeys, highscore, onGameOv
           });
         }
 
-        // Entferne Hindernisse die aus dem Bildschirm sind
-        if (obstacle.x + obstacle.width < 0) {
+        // Entferne Hindernisse die aus dem Bildschirm sind (aber nicht zerstörte, die haben ihre eigene Logik)
+        if (!obstacle.destroyed && obstacle.x + obstacle.width < 0) {
           state.obstacles.splice(index, 1);
         }
       });
