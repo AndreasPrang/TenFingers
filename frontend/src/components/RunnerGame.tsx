@@ -13,6 +13,12 @@ interface Obstacle {
   specialType?: number; // 0: Tumbleweed, 1: Weihnachtsmann, 2: Geschenk, 3: Geist
 }
 
+interface Bird {
+  x: number;
+  y: number;
+  wingFrame: number; // 0 oder 1 für Flügelschlag-Animation
+}
+
 interface RunnerGameProps {
   targetKeys: string;
   highscore?: { wpm: number; accuracy: number } | null;
@@ -31,6 +37,7 @@ const RunnerGame: React.FC<RunnerGameProps> = ({ targetKeys, highscore, onGameOv
     playerVelocity: 0,
     isJumping: false,
     obstacles: [] as Obstacle[],
+    birds: [] as Bird[],
     gameSpeed: 4.5,
     frameCount: 0,
     correctPresses: 0,
@@ -38,6 +45,7 @@ const RunnerGame: React.FC<RunnerGameProps> = ({ targetKeys, highscore, onGameOv
     totalObstacles: 0,
     gameOver: false,
     nextObstacleIn: 0,
+    nextBirdIn: 0,
     difficultyLevel: 0,
     startTime: 0,
     pointsPerJump: 10, // Dynamische Punkte pro Sprung
@@ -211,6 +219,32 @@ const RunnerGame: React.FC<RunnerGameProps> = ({ targetKeys, highscore, onGameOv
     ctx.fillRect(dinoX + 33, dinoY + 15 + bodyOffsetY, 3, 6);
   };
 
+  // Hilfsfunktion zum Zeichnen eines Vogels (Chrome Dino Stil - Pterodaktylus)
+  const drawBird = (ctx: CanvasRenderingContext2D, birdX: number, birdY: number, wingFrame: number) => {
+    ctx.fillStyle = '#535353'; // Dunkelgrau wie Chrome Dino
+
+    // Körper (oval)
+    ctx.fillRect(birdX + 10, birdY + 8, 20, 8);
+
+    // Kopf
+    ctx.fillRect(birdX + 28, birdY + 6, 8, 10);
+
+    // Schnabel
+    ctx.fillRect(birdX + 36, birdY + 10, 6, 4);
+
+    // Flügel-Animation
+    if (wingFrame === 0) {
+      // Flügel oben
+      ctx.fillRect(birdX + 8, birdY, 18, 6);
+    } else {
+      // Flügel unten
+      ctx.fillRect(birdX + 8, birdY + 12, 18, 6);
+    }
+
+    // Schwanz
+    ctx.fillRect(birdX, birdY + 10, 12, 4);
+  };
+
   // Start Screen
   useEffect(() => {
     if (gameStarted) return;
@@ -221,9 +255,12 @@ const RunnerGame: React.FC<RunnerGameProps> = ({ targetKeys, highscore, onGameOv
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Hintergrund
-    ctx.fillStyle = '#87CEEB';
-    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    // Hintergrund mit Himmel-Gradient
+    const gradient = ctx.createLinearGradient(0, 0, 0, GROUND_Y);
+    gradient.addColorStop(0, '#87CEEB');    // Helleres Blau oben
+    gradient.addColorStop(1, '#B0D4E3');    // Helleres/weißlicheres Blau am Horizont
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, CANVAS_WIDTH, GROUND_Y);
 
     // Boden
     ctx.fillStyle = '#8B4513';
@@ -274,9 +311,12 @@ const RunnerGame: React.FC<RunnerGameProps> = ({ targetKeys, highscore, onGameOv
       state.lastFrameTime = currentTime;
       state.frameCount++;
 
-      // Hintergrund
-      ctx.fillStyle = '#87CEEB';
-      ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+      // Hintergrund mit Himmel-Gradient
+      const gradient = ctx.createLinearGradient(0, 0, 0, GROUND_Y);
+      gradient.addColorStop(0, '#87CEEB');    // Helleres Blau oben
+      gradient.addColorStop(1, '#B0D4E3');    // Helleres/weißlicheres Blau am Horizont
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, CANVAS_WIDTH, GROUND_Y);
 
       // Boden
       ctx.fillStyle = '#8B4513';
@@ -347,6 +387,35 @@ const RunnerGame: React.FC<RunnerGameProps> = ({ targetKeys, highscore, onGameOv
 
         state.nextObstacleIn = minSpacing + Math.random() * (maxSpacing - minSpacing);
       }
+
+      // Vögel spawnen (selten - ca alle 5-10 Sekunden bei 60 FPS)
+      state.nextBirdIn--;
+      if (state.nextBirdIn <= 0) {
+        const bird: Bird = {
+          x: CANVAS_WIDTH,
+          y: 80 + Math.random() * 150, // Zufällige Höhe im Himmel (80-230px)
+          wingFrame: 0,
+        };
+        state.birds.push(bird);
+        // Nächster Vogel in 300-600 Frames (5-10 Sekunden bei 60 FPS)
+        state.nextBirdIn = 300 + Math.random() * 300;
+      }
+
+      // Vögel zeichnen und bewegen
+      state.birds.forEach((bird, index) => {
+        // Vögel fliegen langsamer als Hindernisse (halbe Geschwindigkeit)
+        bird.x -= state.gameSpeed * 0.5;
+
+        // Flügelschlag-Animation (schneller als Bein-Animation)
+        bird.wingFrame = Math.floor(state.frameCount / 8) % 2; // 0 oder 1
+
+        drawBird(ctx, bird.x, bird.y, bird.wingFrame);
+
+        // Entferne Vögel die aus dem Bildschirm sind
+        if (bird.x + 42 < 0) { // 42 ist die ungefähre Breite des Vogels
+          state.birds.splice(index, 1);
+        }
+      });
 
       // Hindernisse zeichnen und bewegen
       state.obstacles.forEach((obstacle, index) => {
@@ -606,6 +675,7 @@ const RunnerGame: React.FC<RunnerGameProps> = ({ targetKeys, highscore, onGameOv
     // Initialisierung
     gameStateRef.current.playerY = GROUND_Y - PLAYER_SIZE;
     gameStateRef.current.nextObstacleIn = 150;
+    gameStateRef.current.nextBirdIn = 180 + Math.random() * 300; // Erster Vogel nach 3-8 Sekunden
     gameStateRef.current.lastFrameTime = 0; // Reset delta-time
 
     animationFrameId = requestAnimationFrame(gameLoop);
