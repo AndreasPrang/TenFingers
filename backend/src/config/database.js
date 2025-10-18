@@ -109,7 +109,7 @@ const getDefaultLessons = () => {
       lesson_type: 'normal'
     },
     {
-      title: 'Tastatur-Runner',
+      title: 'Dino Runner',
       description: 'Springe über Hindernisse, indem du die angezeigten Buchstaben rechtzeitig tippst! Ein spannendes Endless-Runner-Spiel.',
       level: 11,
       text_content: 'asdfghjkl',
